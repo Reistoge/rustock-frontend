@@ -21,7 +21,6 @@ function passwordsMatchValidator(control: AbstractControl): ValidationErrors | n
   selector: 'app-register',
   imports: [ReactiveFormsModule],
   templateUrl: './register.html',
-  styleUrl: './register.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Register {
