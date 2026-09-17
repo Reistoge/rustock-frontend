@@ -1,0 +1,142 @@
+<main class="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
+  <div class="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+    <h1 class="text-2xl font-semibold text-slate-900">Create an account</h1>
+    <p class="mt-1 text-sm text-slate-500">Join Rustock to start simulating.</p>
+
+    <form class="mt-6 flex flex-col gap-4" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+      <div class="flex flex-col gap-1.5">
+        <label for="name" class="text-sm font-medium text-slate-700">Name</label>
+        <input
+          id="name"
+          type="text"
+          autocomplete="name"
+          formControlName="name"
+          class="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+          [class.border-red-400]="form.controls.name.invalid && form.controls.name.touched"
+          [attr.aria-invalid]="form.controls.name.invalid && form.controls.name.touched"
+          aria-describedby="name-error"
+        />
+        @if (form.controls.name.invalid && form.controls.name.touched) {
+          <p id="name-error" class="text-xs text-red-600" role="alert">
+            @if (form.controls.name.hasError('required')) {
+              Name is required.
+            } @else if (form.controls.name.hasError('maxlength')) {
+              Name must be 100 characters or fewer.
+            }
+          </p>
+        }
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="email" class="text-sm font-medium text-slate-700">Email</label>
+        <input
+          id="email"
+          type="email"
+          autocomplete="email"
+          formControlName="email"
+          class="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+          [class.border-red-400]="form.controls.email.invalid && form.controls.email.touched"
+          [attr.aria-invalid]="form.controls.email.invalid && form.controls.email.touched"
+          aria-describedby="email-error"
+        />
+        @if (form.controls.email.invalid && form.controls.email.touched) {
+          <p id="email-error" class="text-xs text-red-600" role="alert">
+            @if (form.controls.email.hasError('required')) {
+              Email is required.
+            } @else if (form.controls.email.hasError('email')) {
+              Enter a valid email address.
+            } @else if (form.controls.email.hasError('maxlength')) {
+              Email must be 320 characters or fewer.
+            }
+          </p>
+        }
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="password" class="text-sm font-medium text-slate-700">Password</label>
+        <div class="relative">
+          <input
+            id="password"
+            [type]="passwordVisible() ? 'text' : 'password'"
+            autocomplete="new-password"
+            formControlName="password"
+            class="w-full rounded-md border border-slate-300 px-3 py-2 pr-16 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+            [class.border-red-400]="form.controls.password.invalid && form.controls.password.touched"
+            [attr.aria-invalid]="form.controls.password.invalid && form.controls.password.touched"
+            aria-describedby="password-error"
+          />
+          <button
+            type="button"
+            class="absolute inset-y-0 right-0 px-3 text-xs font-medium text-indigo-600 hover:text-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 rounded-md"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-pressed]="passwordVisible()"
+          >
+            {{ passwordVisible() ? 'Hide' : 'Show' }}
+          </button>
+        </div>
+        @if (form.controls.password.invalid && form.controls.password.touched) {
+          <p id="password-error" class="text-xs text-red-600" role="alert">
+            @if (form.controls.password.hasError('required')) {
+              Password is required.
+            } @else if (form.controls.password.hasError('minlength')) {
+              Password must be at least 8 characters.
+            }
+          </p>
+        }
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="confirmPassword" class="text-sm font-medium text-slate-700">Confirm password</label>
+        <div class="relative">
+          <input
+            id="confirmPassword"
+            [type]="confirmPasswordVisible() ? 'text' : 'password'"
+            autocomplete="new-password"
+            formControlName="confirmPassword"
+            class="w-full rounded-md border border-slate-300 px-3 py-2 pr-16 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+            [class.border-red-400]="
+              (form.controls.confirmPassword.invalid || form.hasError('passwordMismatch')) &&
+              form.controls.confirmPassword.touched
+            "
+            [attr.aria-invalid]="
+              (form.controls.confirmPassword.invalid || form.hasError('passwordMismatch')) &&
+              form.controls.confirmPassword.touched
+            "
+            aria-describedby="confirm-password-error"
+          />
+          <button
+            type="button"
+            class="absolute inset-y-0 right-0 px-3 text-xs font-medium text-indigo-600 hover:text-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 rounded-md"
+            (click)="toggleConfirmPasswordVisibility()"
+            [attr.aria-pressed]="confirmPasswordVisible()"
+          >
+            {{ confirmPasswordVisible() ? 'Hide' : 'Show' }}
+          </button>
+        </div>
+        @if (form.controls.confirmPassword.touched) {
+          @if (form.controls.confirmPassword.hasError('required')) {
+            <p id="confirm-password-error" class="text-xs text-red-600" role="alert">
+              Please confirm your password.
+            </p>
+          } @else if (form.hasError('passwordMismatch')) {
+            <p id="confirm-password-error" class="text-xs text-red-600" role="alert">
+              Passwords do not match.
+            </p>
+          }
+        }
+      </div>
+
+      @if (submitError()) {
+        <p class="text-sm text-red-600" role="alert">{{ submitError() }}</p>
+      }
+
+      <button
+        type="submit"
+        class="mt-2 inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 disabled:cursor-not-allowed disabled:opacity-60"
+        [disabled]="submitting()"
+      >
+        {{ submitting() ? 'Creating account...' : 'Create account' }}
+      </button>
+    </form>
+  </div>
+</main>

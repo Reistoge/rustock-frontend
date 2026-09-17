@@ -1,0 +1,86 @@
+<main class="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
+  <div class="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+    <h1 class="text-2xl font-semibold text-slate-900">Sign in</h1>
+    <p class="mt-1 text-sm text-slate-500">Welcome back to Rustock.</p>
+
+    <form class="mt-6 flex flex-col gap-4" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+      <div class="flex flex-col gap-1.5">
+        <label for="email" class="text-sm font-medium text-slate-700">Email</label>
+        <input
+          id="email"
+          type="email"
+          autocomplete="email"
+          formControlName="email"
+          class="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+          [class.border-red-400]="form.controls.email.invalid && form.controls.email.touched"
+          [attr.aria-invalid]="form.controls.email.invalid && form.controls.email.touched"
+          aria-describedby="email-error"
+        />
+        @if (form.controls.email.invalid && form.controls.email.touched) {
+          <p id="email-error" class="text-xs text-red-600" role="alert">
+            @if (form.controls.email.hasError('required')) {
+              Email is required.
+            } @else if (form.controls.email.hasError('email')) {
+              Enter a valid email address.
+            }
+          </p>
+        }
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="password" class="text-sm font-medium text-slate-700">Password</label>
+        <div class="relative">
+          <input
+            id="password"
+            [type]="passwordVisible() ? 'text' : 'password'"
+            autocomplete="current-password"
+            formControlName="password"
+            class="w-full rounded-md border border-slate-300 px-3 py-2 pr-16 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+            [class.border-red-400]="form.controls.password.invalid && form.controls.password.touched"
+            [attr.aria-invalid]="form.controls.password.invalid && form.controls.password.touched"
+            aria-describedby="password-error"
+          />
+          <button
+            type="button"
+            class="absolute inset-y-0 right-0 px-3 text-xs font-medium text-indigo-600 hover:text-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 rounded-md"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-pressed]="passwordVisible()"
+          >
+            {{ passwordVisible() ? 'Hide' : 'Show' }}
+          </button>
+        </div>
+        @if (form.controls.password.invalid && form.controls.password.touched) {
+          <p id="password-error" class="text-xs text-red-600" role="alert">
+            @if (form.controls.password.hasError('required')) {
+              Password is required.
+            } @else if (form.controls.password.hasError('minlength')) {
+              Password must be at least 8 characters.
+            }
+          </p>
+        }
+      </div>
+
+      @if (submitError()) {
+        <p class="text-sm text-red-600" role="alert">{{ submitError() }}</p>
+      }
+
+      <button
+        type="submit"
+        class="mt-2 inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 disabled:cursor-not-allowed disabled:opacity-60"
+        [disabled]="submitting()"
+      >
+        {{ submitting() ? 'Signing in...' : 'Sign in' }}
+      </button>
+    </form>
+
+    <p class="mt-6 text-center text-sm text-slate-500">
+      Don't have an account?
+      <a
+        routerLink="/register"
+        class="font-medium text-indigo-600 hover:text-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 rounded-sm"
+      >
+        Sign up
+      </a>
+    </p>
+  </div>
+</main>
