@@ -1,3 +1,11 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import 'tailwindcss';
+@import 'uplot/dist/uPlot.min.css';
+@plugin "tailwindcss-primeui";
+
+/* uPlot theme override so the chart canvas matches the app's palette. */
+.uplot {
+  @apply text-slate-800 bg-white border border-slate-200;
+}
+
