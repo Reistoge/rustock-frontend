@@ -1,0 +1,71 @@
+<header class="flex items-end justify-between gap-6">
+  <div class="flex flex-col gap-2">
+    <a routerLink="/stock" class="flex items-center gap-1.5 self-start text-sm font-medium no-underline">
+      <i class="pi pi-chevron-left text-xs" aria-hidden="true"></i>
+      Volver a Mis simulaciones
+    </a>
+    @if (stock(); as current) {
+      <div class="flex items-baseline gap-3.5">
+        <h1 class="m-0 text-[32px] font-semibold tracking-tight">{{ current.name }}</h1>
+        <span class="font-mono text-lg text-muted">{{ current.ticker }}</span>
+      </div>
+    }
+  </div>
+
+  @if (stock()) {
+    <div class="flex gap-2">
+      <p-button label="Editar" icon="pi pi-pencil" severity="secondary" (onClick)="editOpen.set(true)" />
+      <p-button
+        label="Eliminar"
+        icon="pi pi-trash"
+        severity="danger"
+        [outlined]="true"
+        (onClick)="confirmDeleteStock()"
+      />
+      <p-button label="Nueva simulación" icon="pi pi-plus" (onClick)="newSimulation()" />
+    </div>
+  }
+</header>
+
+@if (notFound()) {
+  <div role="alert" class="rounded-xl border border-dashed border-line-strong px-5 py-6 text-[15px]">
+    No encontramos esta acción en tu perfil.
+  </div>
+} @else {
+  <div class="flex min-h-0 flex-1 gap-6">
+    <app-simulation-history
+      [simulations]="history.items()"
+      [selectedId]="history.selectedId()"
+      [loading]="history.loading()"
+      [hasMore]="history.hasMore()"
+      [error]="history.error()"
+      (selectSimulation)="selectSimulation($event)"
+      (loadMore)="history.loadMore()"
+    />
+
+    <section
+      class="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto rounded-[14px] border border-line bg-white p-6"
+      aria-label="Simulación seleccionada"
+    >
+      @if (history.selected(); as selected) {
+        <app-saved-simulation-panel
+          [simulation]="selected"
+          [suspended]="dialogOpen()"
+          (deleteSimulation)="confirmDeleteSimulation()"
+        />
+      } @else {
+        <div class="flex flex-1 flex-col items-center justify-center gap-4 text-center text-muted">
+          <i class="pi pi-chart-line text-[40px] text-faint" aria-hidden="true"></i>
+          <span class="text-[15px]">Selecciona una simulación guardada o crea una nueva.</span>
+        </div>
+      }
+    </section>
+  </div>
+}
+
+<app-stock-form-dialog
+  mode="edit"
+  [stockId]="id()"
+  [currentName]="stock()?.name ?? ''"
+  [(visible)]="editOpen"
+/>

@@ -1,0 +1,51 @@
+<header class="flex flex-col gap-1">
+  <h1 class="m-0 text-[32px] font-semibold tracking-tight">Acciones</h1>
+  <p class="m-0 text-[15px] text-muted">
+    Selecciona una acción para ver sus simulaciones guardadas.
+  </p>
+</header>
+
+<div class="flex items-center gap-4">
+  <p-button icon="pi pi-plus" size="large" ariaLabel="Agregar acción" (onClick)="addOpen.set(true)" />
+  <label
+    class="flex h-14 flex-1 items-center gap-3 rounded-[10px] border border-line bg-white px-[18px] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand"
+  >
+    <i class="pi pi-search text-muted" aria-hidden="true"></i>
+    <input
+      pInputText
+      type="search"
+      placeholder="Buscar por nombre o ticker"
+      aria-label="Buscar acción"
+      class="h-full! border-0! bg-transparent! px-0! text-base! ring-0!"
+      [formControl]="search"
+    />
+  </label>
+</div>
+
+@if (profile.loading() && !profile.hasStocks()) {
+  <div role="status" class="flex items-center gap-3 text-[15px] text-muted">
+    <p-progressspinner strokeWidth="3" ariaLabel="Cargando" />
+    Cargando acciones…
+  </div>
+} @else if (profile.error(); as error) {
+  <div role="alert" class="flex items-center gap-4 rounded-xl border border-danger-line bg-danger-soft p-5">
+    <span class="flex-1 text-[15px] text-danger-dark">{{ error }}</span>
+    <p-button label="Reintentar" severity="secondary" size="small" (onClick)="profile.reload()" />
+  </div>
+} @else if (!profile.hasStocks()) {
+  <div class="flex flex-col gap-2 rounded-xl border border-dashed border-line-strong px-5 py-6">
+    <span class="text-[15px] font-semibold">Aún no tienes acciones</span>
+    <span class="text-sm text-muted">Agrega una con el botón + para empezar a simular.</span>
+  </div>
+} @else {
+  <div class="grid grid-cols-1 gap-5 xl:grid-cols-2">
+    @for (stock of stocks(); track stock.id) {
+      <app-stock-card [stock]="stock" />
+    }
+  </div>
+  @if (stocks().length === 0) {
+    <p class="m-0 text-[15px] text-muted">No hay acciones que coincidan con la búsqueda.</p>
+  }
+}
+
+<app-stock-form-dialog mode="add" [(visible)]="addOpen" />

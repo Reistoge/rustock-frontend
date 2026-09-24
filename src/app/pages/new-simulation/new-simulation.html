@@ -1,0 +1,181 @@
+<header class="flex flex-col gap-1">
+  <h1 class="m-0 text-[32px] font-semibold tracking-tight">Simulaciones</h1>
+  <p class="m-0 text-[15px] text-muted">
+  
+  </p>
+</header>
+
+<div class="flex flex-col gap-3 md:flex-row md:items-center">
+  <p-button icon="pi pi-plus" label="Nueva simulación" (onClick)="startCreate()" />
+  <label
+    class="flex h-14 flex-1 items-center gap-3 rounded-[10px] border border-line bg-white px-[18px] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand"
+  >
+    <i class="pi pi-search text-muted" aria-hidden="true"></i>
+    <input
+      pInputText
+      type="search"
+      placeholder="Buscar por modelo, acción o semilla"
+      aria-label="Buscar simulación"
+      class="h-full! border-0! bg-transparent! px-0! text-base! ring-0!"
+      [formControl]="search"
+    />
+  </label>
+  <div class="flex w-full flex-col gap-1.5 md:w-72 md:shrink-0">
+    <p-select
+      inputId="sim-model-filter"
+      [formControl]="modelControl"
+      [options]="modelOptions"
+      optionLabel="label"
+      optionValue="value"
+      appendTo="body"
+    />
+  </div>
+</div>
+
+@if (creating()) {
+  <section class="flex flex-col gap-4" aria-label="Nueva simulación">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div class="flex flex-col gap-1">
+        <h2 class="m-0 text-lg font-semibold">Nueva simulación</h2>
+        <p class="m-0 text-sm text-muted">
+          Al simular se crea la simulación (POST /simulations) y el servidor devuelve la
+          trayectoria (GET /simulations/{{ '{' }}id{{ '}' }}/ticks).
+        </p>
+      </div>
+      <div class="flex flex-col gap-1.5 sm:w-72 sm:shrink-0">
+        <label for="sim-stock" class="text-sm font-medium">Acción</label>
+        <p-select
+          inputId="sim-stock"
+          [formControl]="stockControl"
+          [options]="stockOptions()"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body"
+        />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
+      <div class="min-h-0 overflow-y-auto rounded-[14px] border border-line bg-white">
+        <app-simulation-form
+          [stock]="stock()"
+          [busy]="saving()"
+          (simulate)="onSimulate($event)"
+          (edited)="onEdited()"
+        />
+      </div>
+
+      <div class="flex min-h-0 min-w-0 flex-col gap-[18px] rounded-[14px] border border-line bg-white p-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <h3 class="m-0 text-base font-semibold">Trayectoria · {{ ticker() }}</h3>
+          <span class="font-mono text-[13px] text-muted">{{ runMeta() }}</span>
+        </div>
+
+        @if (saveError(); as error) {
+          <p-message severity="error" [text]="error" />
+        }
+
+        @if (run(); as current) {
+          <p-message severity="success">
+            <div role="status" class="flex w-full items-center gap-2.5">
+              <i class="pi pi-check" aria-hidden="true"></i>
+              <span class="flex-1">{{ savedText() }}</span>
+              @if (current.stock_id) {
+                <a
+                  class="text-sm font-medium"
+                  [routerLink]="['/stock', current.stock_id]"
+                  [queryParams]="{ sim: current.id }"
+                >
+                  Ver en historial →
+                </a>
+              }
+            </div>
+          </p-message>
+        }
+
+        <app-trajectory-viewer [simulationId]="run()?.id ?? null" size="large" [showStats]="true" />
+
+        <div class="flex justify-end">
+          <p-button label="Volver al listado" severity="secondary" (onClick)="backToList()" />
+        </div>
+      </div>
+    </div>
+  </section>
+} @else if (selected(); as current) {
+  <section class="flex flex-col gap-4" aria-label="Simulación seleccionada">
+    <div class="flex flex-wrap items-center gap-3">
+      <p-button
+        label="Volver"
+        icon="pi pi-chevron-left"
+        severity="secondary"
+        (onClick)="backToList()"
+      />
+      @if (current.stock_id) {
+        <a
+          class="text-sm font-medium"
+          [routerLink]="['/stock', current.stock_id]"
+          [queryParams]="{ sim: current.id }"
+        >
+          Ver en la acción {{ selectedStockTicker() ?? '' }} →
+        </a>
+      } @else {
+        <span class="text-sm text-muted">Simulación sin acción asociada.</span>
+      }
+    </div>
+
+    <div class="rounded-[14px] border border-line bg-white p-4 sm:p-6">
+      <app-saved-simulation-panel
+        [simulation]="current"
+        [suspended]="dialogSuspended()"
+        (deleteSimulation)="confirmDeleteSimulation()"
+      />
+    </div>
+  </section>
+} @else {
+  @if (store.loading() && store.items().length === 0) {
+    <div role="status" class="flex items-center gap-3 text-[15px] text-muted">
+      <p-progressspinner strokeWidth="3" ariaLabel="Cargando" />
+      Cargando simulaciones…
+    </div>
+  } @else if (store.error(); as error) {
+    <div role="alert" class="flex items-center gap-4 rounded-xl border border-danger-line bg-danger-soft p-5">
+      <span class="flex-1 text-[15px] text-danger-dark">{{ error }}</span>
+      <p-button label="Reintentar" severity="secondary" size="small" (onClick)="retryList()" />
+    </div>
+  } @else if (store.items().length === 0) {
+    <div class="flex flex-col gap-2 rounded-xl border border-dashed border-line-strong px-5 py-6">
+      <span class="text-[15px] font-semibold">Aún no hay simulaciones</span>
+      <span class="text-sm text-muted">Crea una con el botón + para empezar.</span>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 gap-5 xl:grid-cols-2">
+      @for (simulation of simulations(); track simulation.id) {
+        <app-simulation-card
+          [simulation]="simulation"
+          [stockLabel]="stockLabelFor(simulation)"
+          [selected]="isSelected(simulation)"
+          (click)="selectSimulation(simulation.id)"
+        />
+      }
+    </div>
+    @if (simulations().length === 0) {
+      <p class="m-0 text-[15px] text-muted">No hay simulaciones que coincidan con la búsqueda.</p>
+    }
+    @if (store.hasMore()) {
+      <div class="flex justify-center">
+        <p-button
+          label="Cargar más"
+          variant="text"
+          [loading]="store.loading()"
+          (onClick)="store.loadMore(modelControl.value ?? null)"
+        />
+      </div>
+    }
+    @if (store.loading() && store.items().length > 0) {
+      <div role="status" class="flex items-center gap-3 text-sm text-muted">
+        <p-progressspinner strokeWidth="3" ariaLabel="Cargando más" />
+        Cargando más simulaciones…
+      </div>
+    }
+  }
+}
