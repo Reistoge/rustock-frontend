@@ -1,20 +1,21 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { SelectButtonModule } from 'primeng/selectbutton';
-import { SliderModule } from 'primeng/slider';
 
 import { formatPlain } from '../../core/format/format';
 import { PLAYBACK_SPEEDS, PlaybackSpeed } from '../../core/trajectory/playback.service';
 
-const SLIDER_MAX = 1000;
+const STEP = 0.05;
 
-// Presentational: reset, play/pause, position slider, tick label and speed.
+// Compact transport bar: reset, play/pause, ±5% steps, tick label and speed.
+// The chart fills the view, so there is no scrub slider; seeking happens
+// through the step buttons (emitted as absolute progress via `seek`).
 @Component({
   selector: 'app-playback-controls',
-  imports: [FormsModule, ButtonModule, SliderModule, SelectButtonModule],
+  imports: [FormsModule, ButtonModule, SelectButtonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'flex items-center gap-3' },
+  host: { class: 'flex flex-wrap items-center gap-2 rounded-xl bg-canvas px-4 py-3' },
   template: `
     <p-button
       icon="pi pi-step-backward"
@@ -29,18 +30,19 @@ const SLIDER_MAX = 1000;
       styleClass="w-14!"
       (onClick)="toggle.emit()"
     />
-    <div class="flex min-w-0 flex-1 items-center px-2">
-      <p-slider
-        class="w-full"
-        [min]="0"
-        [max]="sliderMax"
-        [animate]="false"
-        ariaLabel="Posición de la simulación"
-        [ngModel]="position()"
-        (ngModelChange)="seek.emit($event / sliderMax)"
-      />
-    </div>
-    <span class="min-w-[170px] shrink-0 text-right font-mono text-[13px] text-slate-700">
+    <p-button
+      icon="pi pi-backward"
+      severity="secondary"
+      ariaLabel="Retroceder un 5%"
+      (onClick)="stepBy(-STEP)"
+    />
+    <p-button
+      icon="pi pi-forward"
+      severity="secondary"
+      ariaLabel="Avanzar un 5%"
+      (onClick)="stepBy(STEP)"
+    />
+    <span class="min-w-0 flex-1 text-right font-mono text-[13px] text-slate-700">
       {{ label() }}
     </span>
     <div role="group" aria-label="Velocidad de reproducción" class="shrink-0">
@@ -66,10 +68,14 @@ export class PlaybackControls {
   readonly seek = output<number>();
   readonly speedChange = output<PlaybackSpeed>();
 
-  protected readonly sliderMax = SLIDER_MAX;
-  protected readonly position = computed(() => Math.round(this.progress() * SLIDER_MAX));
+  protected readonly STEP = STEP;
   protected readonly speedOptions = PLAYBACK_SPEEDS.map((value) => ({
     label: `${formatPlain(value)}×`,
     value,
   }));
+
+  /** Seeks relative to the current progress, clamped to [0, 1]. */
+  protected stepBy(delta: number): void {
+    this.seek.emit(Math.min(1, Math.max(0, this.progress() + delta)));
+  }
 }

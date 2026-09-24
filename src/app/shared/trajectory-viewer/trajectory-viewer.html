@@ -42,7 +42,7 @@
 }
 
 <!-- The chart stays mounted across loads: new trajectories go through setData(). -->
-<div class="flex flex-col gap-[18px]" [class.hidden]="store.status() !== 'ready'">
+<div class="flex min-h-0 flex-1 flex-col gap-[18px]" [class.hidden]="store.status() !== 'ready'">
   @if (showStats()) {
     <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
       @for (stat of stats(); track stat.label) {
@@ -54,8 +54,12 @@
     </div>
   }
 
-  <div class="flex flex-col gap-2">
-    <div class="relative cursor-crosshair" role="img" aria-label="Trayectoria simulada del precio">
+  <div class="flex min-h-0 flex-1 flex-col gap-2">
+    <div
+      class="relative min-h-[320px] flex-1 cursor-grab active:cursor-grabbing"
+      role="img"
+      aria-label="Trayectoria simulada del precio"
+    >
       <app-uplot-chart [options]="chartOptions()" [data]="chartData()" />
       @if (tooltip(); as tip) {
         <div
@@ -86,13 +90,14 @@
         <span class="flex items-center gap-2">
           <span class="h-[3px] w-4 rounded-sm bg-brand" aria-hidden="true"></span>
           <span class="font-medium text-slate-700">Precio:</span>
-          <span class="text-ink">{{ lg.price }}</span>
+          <span class="text-ink">{{parsePrice(lg.price) }}</span>
         </span>
         <span class="flex items-center gap-2">
           <span class="h-0 w-4 border-t-2 border-dashed border-brand/40" aria-hidden="true"></span>
           <span class="font-medium text-slate-700">S₀:</span>
           <span class="text-ink">{{ lg.s0 }}</span>
         </span>
+        <span class="ml-auto hidden sm:inline">Arrastra para mover · Rueda para zoom · Doble clic para restablecer</span>
       </div>
     }
   </div>

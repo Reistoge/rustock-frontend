@@ -11,7 +11,7 @@ import { TrajectoryViewer } from '../../shared/trajectory-viewer/trajectory-view
   selector: 'app-saved-simulation-panel',
   imports: [ButtonModule, TrajectoryViewer],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'flex flex-col gap-4' },
+  host: { class: 'flex min-h-0 flex-1 flex-col gap-4' },
   template: `
     <div class="flex items-start justify-between gap-4">
       <div class="flex flex-col gap-1">

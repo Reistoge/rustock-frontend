@@ -33,7 +33,7 @@ const IDLE_MESSAGE =
   templateUrl: './trajectory-viewer.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [TrajectoryStore, PlaybackService],
-  host: { class: 'block' },
+  host: { class: 'flex min-h-0 flex-1 flex-col' },
 })
 export class TrajectoryViewer {
   readonly simulationId = input<string | null>(null);
@@ -89,6 +89,13 @@ export class TrajectoryViewer {
   protected readonly boxHeight = computed(() =>
     this.size() === 'large' ? 'h-[560px]' : 'h-[420px]',
   );
+  protected readonly parsePrice = (lgPrice:string) :string =>  {
+    return ( parseFloat(lgPrice).toFixed(9));
+  };
+     
+
+  
+
 
   protected readonly stats = computed(() => {
     const trajectory = this.trajectory();
@@ -139,7 +146,9 @@ export class TrajectoryViewer {
     const trajectory = this.trajectory();
     const at = this.cursor();
     return trajectory
-      ? `Tick ${at}/${this.lastIndex()} · S ${formatPrice(trajectory.ticks[at])}`
+      // ? `Tick ${at}/${this.lastIndex()} · S ${formatPrice(trajectory.ticks[at])}`
+      ? `Tick ${at}/${this.lastIndex()} `
+
       : '';
   });
 

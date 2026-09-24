@@ -11,13 +11,13 @@ import {
 import uPlot from 'uplot';
 
 // The only place uPlot is instantiated (RULES.md §4). The chart is created
-// once; later data changes go through `setData()`, and width follows the
-// container through a ResizeObserver.
+// once; later data changes go through `setData()`, and width/height follow
+// the container through a ResizeObserver.
 @Component({
   selector: 'app-uplot-chart',
-  template: '<div #container class="w-full overflow-hidden"></div>',
+  template: '<div #container class="h-full w-full overflow-hidden"></div>',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'block w-full' },
+  host: { class: 'block h-full min-h-0 w-full' },
 })
 export class UplotChart implements OnDestroy {
   // Read once, at creation: uPlot can't reconfigure series/axes in place.
@@ -34,16 +34,26 @@ export class UplotChart implements OnDestroy {
       const element = this.container().nativeElement;
       const options = this.options();
       this.chart = new uPlot(
-        { ...options, width: element.clientWidth || options.width },
+        {
+          ...options,
+          width: element.clientWidth || options.width,
+          height: element.clientHeight || options.height,
+        },
         this.data(),
         element,
       );
 
-      this.resizeObserver = new ResizeObserver(([entry]) => {
-        const width = Math.floor(entry.contentRect.width);
-        // Width is 0 while the chart is hidden (loading/error states).
-        if (this.chart && width > 0 && width !== this.chart.width) {
-          this.chart.setSize({ width, height: this.chart.height });
+      this.resizeObserver = new ResizeObserver(() => {
+        const width = Math.floor(element.clientWidth);
+        const height = Math.floor(element.clientHeight);
+        // Zero while the chart is hidden (loading/error states).
+        if (
+          this.chart &&
+          width > 0 &&
+          height > 0 &&
+          (width !== this.chart.width || height !== this.chart.height)
+        ) {
+          this.chart.setSize({ width, height });
         }
       });
       this.resizeObserver.observe(element);
