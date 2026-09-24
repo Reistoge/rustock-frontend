@@ -66,6 +66,17 @@
                   "with": "src/environments/environment.development.ts"
                 }
               ]
+            },
+            "stubs": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.stubs.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -78,6 +89,9 @@
             },
             "development": {
               "buildTarget": "rustock-frontend:build:development"
+            },
+            "stubs": {
+              "buildTarget": "rustock-frontend:build:stubs"
             }
           },
           "defaultConfiguration": "development"

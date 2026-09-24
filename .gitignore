@@ -39,6 +39,9 @@ testem.log
 /typings
 __screenshots__/
 
+# Local env overrides (see `.env.example`); never commit real values.
+.env
+
 # System files
 .DS_Store
 Thumbs.db
