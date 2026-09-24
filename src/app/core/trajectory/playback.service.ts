@@ -4,7 +4,7 @@ import { DestroyRef, Injectable, computed, effect, inject, signal } from '@angul
 // At 1× the whole trajectory plays in about 6 seconds (HANDOFF.md §5).
 const FULL_RUN_SECONDS = 6;
 
-export const PLAYBACK_SPEEDS = [0.5, 1, 2, 4] as const;
+export const PLAYBACK_SPEEDS = [0.1, 0.5, 1, 2, 4] as const;
 export type PlaybackSpeed = (typeof PLAYBACK_SPEEDS)[number];
 
 // requestAnimationFrame-driven playback of one trajectory. Provided per
