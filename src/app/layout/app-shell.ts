@@ -42,8 +42,8 @@ export class AppShell {
   );
 
   protected readonly navItems = [
-    { path: '/stock', label: 'Stock', icon: 'pi pi-th-large' },
-    { path: '/simulation', label: 'Simulation', icon: 'pi pi-chart-line' },
+    { path: '/simulation', label: 'Simulaciones', icon: 'pi pi-chart-line' },
+    { path: '/stock', label: 'Acciones', icon: 'pi pi-th-large' },
   ];
 
   protected toggleSide(): void {
