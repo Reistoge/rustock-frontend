@@ -44,7 +44,7 @@
 <!-- The chart stays mounted across loads: new trajectories go through setData(). -->
 <div class="flex flex-col gap-[18px]" [class.hidden]="store.status() !== 'ready'">
   @if (showStats()) {
-    <div class="grid grid-cols-4 gap-2.5">
+    <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
       @for (stat of stats(); track stat.label) {
         <div class="flex flex-col gap-1 rounded-[10px] bg-canvas px-3.5 py-3">
           <span class="text-xs text-muted">{{ stat.label }}</span>

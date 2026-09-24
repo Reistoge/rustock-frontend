@@ -28,7 +28,7 @@ import { TrajectoryViewer } from '../../shared/trajectory-viewer/trajectory-view
       />
     </div>
 
-    <div class="grid grid-cols-5 gap-2">
+    <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
       @for (tile of tiles(); track tile.label) {
         <div class="flex flex-col gap-0.5 rounded-[10px] bg-canvas px-3 py-2.5">
           <span class="text-xs text-muted">{{ tile.label }}</span>
