@@ -27,11 +27,6 @@ import { MODELS } from '../../core/simulation/model-catalog';
         >
           <span class="flex w-full items-baseline justify-between gap-3">
             <span class="text-[15px] font-semibold">{{ row.model }}</span>
-            @if (row.stock) {
-              <span class="rounded-full bg-canvas px-2 py-0.5 font-mono text-xs text-body">
-                {{ row.stock }}
-              </span>
-            }
             <span class="text-[13px] text-muted">{{ row.date }}</span>
           </span>
           <span class="font-mono text-[13px] text-body">{{ row.summary }}</span>
@@ -68,9 +63,6 @@ export class SimulationHistory {
   readonly loading = input(false);
   readonly hasMore = input(false);
   readonly error = input<string | null>(null);
-  // Optional stock badge for the global list (`GET /simulations` mixes
-  // stocks; `stock_id` is nullable). Null = no badge (stock detail usage).
-  readonly stockLabel = input<((stockId: string | null | undefined) => string) | null>(null);
 
   readonly selectSimulation = output<string>();
   readonly loadMore = output<void>();
@@ -81,7 +73,6 @@ export class SimulationHistory {
       model: MODELS[simulation.model_type].short,
       date: formatDate(simulation.created_at),
       summary: simulationSummary(simulation),
-      stock: this.stockLabel()?.(simulation.stock_id) ?? null,
     })),
   );
 }
