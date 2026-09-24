@@ -12,6 +12,20 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
+## Backend stubs (offline development)
+
+Copy `.env.example` to `.env` and set `USE_STUBS=true` to run the UI
+without the Rust backend:
+
+```bash
+npm run start:stubs
+```
+
+This selects the `stubs` build configuration, which swaps the HTTP APIs
+for the in-memory stubs in `src/app/core/api/stubs/` (seeded stocks,
+simulations and deterministic trajectories, ~250 ms simulated latency).
+Any email/password logs in. `npm run build:stubs` builds with stubs.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
