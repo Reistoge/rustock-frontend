@@ -1,6 +1,7 @@
 import uPlot from 'uplot';
 
 import { formatPlain } from '../../core/format/format';
+import { createViewNavigation } from './trajectory-chart-navigation';
 
 const BRAND = '#2F4FD8';
 const BRAND_FAINT = '#2F4FD866';
@@ -10,7 +11,8 @@ const MUTED = '#5A5D66';
 const AXIS_FONT = '12px "IBM Plex Mono", monospace';
 
 // Fixed scales for the whole trajectory, so playback (which feeds a growing
-// `subarray`) never rescales the axes.
+// `subarray`) never rescales the axes. User zoom/pan narrows these bounds
+// via the navigation helper; a new trajectory resets them (see its `key`).
 export interface ChartDomain {
   xMax: number;
   yMin: number;
@@ -27,7 +29,9 @@ export interface ChartHover {
 }
 
 export interface TrajectoryChartHooks {
+  /** Current full-trajectory domain; null while nothing is loaded. */
   domain: () => ChartDomain | null;
+  /** Receives the hovered tick, or null when the cursor leaves the plot. */
   onHover: (hover: ChartHover | null) => void;
 }
 
@@ -42,6 +46,22 @@ export function buildTrajectoryChartOptions(
     ticks: { show: false },
   };
 
+  // Zoom/pan state lives in the navigation helper: its range functions
+  // return the zoomed window so playback `setData()` keeps the user's view.
+  const navigation = createViewNavigation(() => {
+    const domain = hooks.domain();
+    if (!domain) {
+      return null;
+    }
+    return {
+      xMin: 0,
+      xMax: domain.xMax,
+      yMin: domain.yMin,
+      yMax: domain.yMax,
+      key: `${domain.xMax}|${domain.yMin}|${domain.yMax}|${domain.s0}`,
+    };
+  });
+
   return {
     width: 640,
     height,
@@ -54,13 +74,8 @@ export function buildTrajectoryChartOptions(
       points: { size: 8, width: 2 },
     },
     scales: {
-      x: { time: false, range: () => [0, hooks.domain()?.xMax || 1] },
-      y: {
-        range: () => {
-          const domain = hooks.domain();
-          return domain ? [domain.yMin, domain.yMax] : [0, 1];
-        },
-      },
+      x: { time: false, range: navigation.xRange },
+      y: { range: navigation.yRange },
     },
     axes: [
       { ...axis, size: 32, values: (_u, splits) => splits.map((v) => `${formatPlain(round2(v))} a`) },
@@ -68,6 +83,8 @@ export function buildTrajectoryChartOptions(
     ],
     series: [{}, { label: 'Precio', stroke: BRAND, width: 2, points: { show: false } }],
     hooks: {
+      ready: [navigation.handleReady],
+      destroy: [navigation.handleDestroy],
       draw: [(u) => drawOverlay(u, hooks.domain())],
       setCursor: [(u) => hooks.onHover(hoverFrom(u))],
     },
