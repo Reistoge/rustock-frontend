@@ -1,0 +1,1 @@
+Guarda aqui el JSON de OpenAPI como openapi.json (el ultimo que compartiste, con /simulations/{id}/ticks).

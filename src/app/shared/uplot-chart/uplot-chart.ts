@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  OnDestroy,
   afterNextRender,
   effect,
   input,
@@ -9,32 +10,53 @@ import {
 } from '@angular/core';
 import uPlot from 'uplot';
 
+// The only place uPlot is instantiated (RULES.md §4). The chart is created
+// once; later data changes go through `setData()`, and width follows the
+// container through a ResizeObserver.
 @Component({
   selector: 'app-uplot-chart',
-  template: '<div #container class="w-full"></div>',
-  styleUrl: './uplot-chart.scss',
+  template: '<div #container class="w-full overflow-hidden"></div>',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'block w-full' },
 })
-export class UplotChart {
-  // `options` is only read once, at chart creation — uPlot doesn't support
-  // reconfiguring series/axes on an existing instance, only its data.
+export class UplotChart implements OnDestroy {
+  // Read once, at creation: uPlot can't reconfigure series/axes in place.
   readonly options = input.required<uPlot.Options>();
   readonly data = input.required<uPlot.AlignedData>();
 
   private readonly container = viewChild.required<ElementRef<HTMLDivElement>>('container');
   private chart: uPlot | undefined;
+  private resizeObserver: ResizeObserver | undefined;
 
   constructor() {
+    // Browser only: afterNextRender never runs during SSR/prerendering.
     afterNextRender(() => {
-      this.chart = new uPlot(this.options(), this.data(), this.container().nativeElement);
+      const element = this.container().nativeElement;
+      const options = this.options();
+      this.chart = new uPlot(
+        { ...options, width: element.clientWidth || options.width },
+        this.data(),
+        element,
+      );
+
+      this.resizeObserver = new ResizeObserver(([entry]) => {
+        const width = Math.floor(entry.contentRect.width);
+        // Width is 0 while the chart is hidden (loading/error states).
+        if (this.chart && width > 0 && width !== this.chart.width) {
+          this.chart.setSize({ width, height: this.chart.height });
+        }
+      });
+      this.resizeObserver.observe(element);
     });
 
     effect(() => {
-      this.chart?.setData(this.data());
+      const data = this.data();
+      this.chart?.setData(data);
     });
   }
 
   ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
     this.chart?.destroy();
   }
 }

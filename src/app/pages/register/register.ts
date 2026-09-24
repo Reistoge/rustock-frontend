@@ -1,79 +1,60 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import {
-  AbstractControl,
-  FormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  Validators,
-} from '@angular/forms';
-import { Router } from '@angular/router';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { PasswordModule } from 'primeng/password';
 
-import { AuthService } from '../../core/auth/auth.service';
+import { AuthApi } from '../../core/api/auth-api';
 
-function passwordsMatchValidator(control: AbstractControl): ValidationErrors | null {
-  const password = control.get('password')?.value;
-  const confirmPassword = control.get('confirmPassword')?.value;
-  return password === confirmPassword ? null : { passwordMismatch: true };
-}
-
+// Limits mirror the backend: `RegisterInfo` validation (username ≥ 1,
+// password ≥ 6) and the `users` columns (name ≤ 100, email ≤ 320).
 @Component({
   selector: 'app-register',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink, ButtonModule, InputTextModule, PasswordModule],
   templateUrl: './register.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Register {
-  protected readonly submitting = signal(false);
-  protected readonly submitError = signal<string | null>(null);
-  protected readonly passwordVisible = signal(false);
-  protected readonly confirmPasswordVisible = signal(false);
-
-  private readonly formBuilder = new FormBuilder();
-  private readonly authService = inject(AuthService);
+  private readonly authApi = inject(AuthApi);
   private readonly router = inject(Router);
 
-  protected readonly form = this.formBuilder.nonNullable.group(
-    {
-      name: ['', [Validators.required, Validators.maxLength(100)]],
-      email: ['', [Validators.required, Validators.email, Validators.maxLength(320)]],
-      password: ['', [Validators.required, Validators.minLength(8)]],
-      confirmPassword: ['', [Validators.required]],
-    },
-    { validators: passwordsMatchValidator },
-  );
+  protected readonly submitting = signal(false);
+  protected readonly submitError = signal<string | null>(null);
 
-  protected togglePasswordVisibility(): void {
-    this.passwordVisible.update((visible) => !visible);
-  }
+  protected readonly form = inject(FormBuilder).nonNullable.group({
+    username: ['', [Validators.required, Validators.maxLength(100)]],
+    email: ['', [Validators.required, Validators.email, Validators.maxLength(320)]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
+  });
 
-  protected toggleConfirmPasswordVisibility(): void {
-    this.confirmPasswordVisible.update((visible) => !visible);
+  protected showError(control: 'username' | 'email' | 'password'): boolean {
+    const field = this.form.controls[control];
+    return field.invalid && field.touched;
   }
 
   protected onSubmit(): void {
     this.submitError.set(null);
-
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
     this.submitting.set(true);
-
-    const { name, email, password } = this.form.getRawValue();
-
-    this.authService.register({ username: name, email, password }).subscribe({
+    this.authApi.register(this.form.getRawValue()).subscribe({
       next: () => {
         this.submitting.set(false);
-        this.router.navigateByUrl('/login');
+        this.router.navigate(['/login'], { queryParams: { registered: 1 } });
       },
       error: (error: HttpErrorResponse) => {
         this.submitting.set(false);
         this.submitError.set(
           error.status === 409
-            ? 'An account with this email or name already exists.'
-            : 'Something went wrong. Please try again.',
+            ? 'Ya existe una cuenta con ese correo o nombre de usuario.'
+            : error.status === 400
+              ? 'Revisa los datos: el correo debe ser válido y la contraseña tener al menos 6 caracteres.'
+              : 'No se pudo crear la cuenta. Inténtalo otra vez.',
         );
       },
     });

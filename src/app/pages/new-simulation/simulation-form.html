@@ -1,0 +1,88 @@
+<form class="flex min-h-0 flex-1 flex-col" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 pb-3 pt-6">
+    <div class="flex flex-col gap-1.5">
+      <label for="sim-model" class="text-sm font-medium">Modelo (model_type)</label>
+      <p-select
+        inputId="sim-model"
+        formControlName="model"
+        [options]="modelOptions"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="h-11!"
+      />
+    </div>
+
+    <div class="whitespace-pre-line rounded-[10px] bg-canvas px-3 py-2.5 font-mono text-[13px] leading-normal">
+      {{ formula() }}
+    </div>
+
+    <h2 class="m-0 text-xs font-semibold uppercase tracking-[0.06em] text-muted">Parámetros base</h2>
+    <div class="grid grid-cols-2 gap-3" formGroupName="base">
+      @for (field of baseFields; track field.key) {
+        <div class="flex flex-col gap-1.5">
+          <label [for]="'sim-' + field.key" class="text-[13px] font-medium">{{ field.label }}</label>
+          <p-inputnumber
+            [inputId]="'sim-' + field.key"
+            [formControlName]="field.key"
+            locale="es-CL"
+            [useGrouping]="false"
+            [maxFractionDigits]="field.integer ? 0 : 6"
+            inputStyleClass="font-mono text-sm! h-11!"
+            [class.is-invalid]="isInvalid('base', field.key)"
+          />
+        </div>
+      }
+    </div>
+
+    <p-button
+      label="Nueva semilla"
+      icon="pi pi-sync"
+      severity="secondary"
+      size="small"
+      styleClass="h-9! text-[13px]!"
+      class="self-start"
+      (onClick)="newSeed()"
+    />
+
+    @if (extraFields().length > 0) {
+      <h2 class="m-0 text-xs font-semibold uppercase tracking-[0.06em] text-muted">
+        Parámetros del modelo (extra_params)
+      </h2>
+      <div class="grid grid-cols-2 gap-3" [formGroup]="extraGroup()">
+        @for (field of extraFields(); track field.key) {
+          <div class="flex flex-col gap-1.5">
+            <label [for]="'sim-x-' + field.key" class="text-[13px] font-medium">{{ field.label }}</label>
+            <p-inputnumber
+              [inputId]="'sim-x-' + field.key"
+              [formControlName]="field.key"
+              locale="es-CL"
+              [useGrouping]="false"
+              [maxFractionDigits]="6"
+              inputStyleClass="font-mono text-sm! h-11!"
+              [class.is-invalid]="isInvalid('extra', field.key)"
+            />
+          </div>
+        }
+      </div>
+    }
+
+    @if (invalid()) {
+      <p class="m-0 text-[13px] text-danger" role="alert">
+        Revisa los campos marcados: S₀, T y pasos deben ser positivos; la semilla, un entero ≥ 0;
+        σ y los parámetros de reversión, ≥ 0; ρ entre −1 y 1.
+      </p>
+    }
+  </div>
+
+  <div class="border-t border-subtle px-6 pb-6 pt-3">
+    <p-button
+      type="submit"
+      label="Simular y guardar"
+      icon="pi pi-play"
+      styleClass="w-full"
+      [loading]="busy()"
+      [disabled]="invalid() || busy()"
+    />
+  </div>
+</form>

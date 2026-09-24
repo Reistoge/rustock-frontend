@@ -1,0 +1,812 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Simulador de Stock</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'IBM Plex Sans',system-ui,sans-serif;background:#F4F3EF;color:#16181D}
+a{color:#2F4FD8}a:hover{color:#1F3AA8}
+button{font-family:inherit;cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.45}
+input,select{font-family:inherit}
+input:focus,select:focus{outline:none;box-shadow:0 0 0 2px #2F4FD8}
+button:focus-visible,a:focus-visible{outline:2px solid #2F4FD8;outline-offset:2px}
+.card:hover{border-color:#2F4FD8 !important;box-shadow:0 6px 20px rgba(22,24,29,0.08)}
+.nav:hover{background:#ECEBE6}
+.row:hover{border-color:#2F4FD8 !important}
+.ghost:hover{background:#ECEBE6 !important}
+.danger:hover{background:#FDECEA !important}
+.spin{animation:spin 0.9s linear infinite;transform-origin:center}@keyframes spin{to{transform:rotate(360deg)}}
+.scrub{-webkit-appearance:none;appearance:none;height:6px;border-radius:999px;cursor:pointer;margin:0}
+.scrub::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#2F4FD8;border:3px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.scrub::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#2F4FD8;border:3px solid #fff}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 960px; box-sizing: border-box; display: flex; background: #F4F3EF; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #16181D; overflow: hidden">
+
+<sc-if value="{{isAuth}}" hint-placeholder-val="{{ false }}">
+<div style="width: 1440px; height: 960px; display: flex; align-items: center; justify-content: center">
+<div style="width: 420px; box-sizing: border-box; padding: 40px; background: #FFFFFF; border: 1px solid #DEDCD5; border-radius: 16px; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="font-weight: 700; font-size: 18px; letter-spacing: -0.01em">[NOMBRE APP]</div>
+<h1 style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.02em">{{authTitle}}</h1>
+<p style="margin: 0; font-size: 14px; color: #5A5D66">{{authSub}}</p>
+</div>
+<form style="display: flex; flex-direction: column; gap: 14px; margin: 0">
+<sc-if value="{{isRegister}}" hint-placeholder-val="{{ false }}">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">
+Nombre de usuario
+<input type="text" autocomplete="username" style="height: 48px; box-sizing: border-box; padding: 0 12px; border: 1px solid #DEDCD5; border-radius: 10px; font-size: 15px">
+</label>
+</sc-if>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">
+Correo
+<input type="email" autocomplete="email" placeholder="nombre@correo.com" style="height: 48px; box-sizing: border-box; padding: 0 12px; border: 1px solid #DEDCD5; border-radius: 10px; font-size: 15px">
+</label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">
+Contraseña
+<input type="password" autocomplete="current-password" style="height: 48px; box-sizing: border-box; padding: 0 12px; border: 1px solid #DEDCD5; border-radius: 10px; font-size: 15px">
+</label>
+<button type="button" onClick="{{login}}" style="margin-top: 8px; height: 48px; background: #16181D; color: #FFFFFF; border: none; border-radius: 10px; font-size: 15px; font-weight: 500">{{authCta}}</button>
+</form>
+<p style="margin: 0; font-size: 14px; color: #5A5D66; text-align: center">{{authSwitchTxt}} <button type="button" onClick="{{authSwitch}}" style="padding: 0; background: none; border: none; font-size: 14px; font-weight: 500; color: #2F4FD8">{{authSwitchCta}}</button></p>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isApp}}" hint-placeholder-val="{{ true }}">
+<aside style="width: {{sideW}}; height: 960px; flex-shrink: 0; box-sizing: border-box; padding: 24px 16px; background: #FFFFFF; border-right: 1px solid #DEDCD5; display: flex; flex-direction: column; gap: 40px">
+<div style="display: flex; align-items: center; gap: 12px">
+<button class="ghost" onClick="{{toggleSide}}" aria-label="Abrir o cerrar menú" style="width: 48px; height: 48px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #FFFFFF; border: 1px solid #DEDCD5; border-radius: 10px; color: #16181D">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="17" x2="20" y2="17"></line></svg>
+</button>
+<sc-if value="{{sideOpen}}" hint-placeholder-val="{{ true }}">
+<div style="font-weight: 700; font-size: 18px; letter-spacing: -0.01em">[NOMBRE APP]</div>
+</sc-if>
+</div>
+<nav aria-label="Principal" style="display: flex; flex-direction: column; gap: 6px">
+<button class="nav" onClick="{{goStock}}" aria-label="Stock" style="height: 52px; display: flex; align-items: center; gap: 14px; padding: 0 14px; border: none; border-radius: 10px; font-size: 18px; font-weight: 500; text-align: left; background: {{navStockBg}}; color: {{navStockFg}}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
+<sc-if value="{{sideOpen}}" hint-placeholder-val="{{ true }}"><span>Stock</span></sc-if>
+</button>
+<button class="nav" onClick="{{goSimNav}}" aria-label="Simulation" style="height: 52px; display: flex; align-items: center; gap: 14px; padding: 0 14px; border: none; border-radius: 10px; font-size: 18px; font-weight: 500; text-align: left; background: {{navSimBg}}; color: {{navSimFg}}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0"><polyline points="3 17 9 11 13 15 21 7"></polyline><polyline points="15 7 21 7 21 13"></polyline></svg>
+<sc-if value="{{sideOpen}}" hint-placeholder-val="{{ true }}"><span>Simulation</span></sc-if>
+</button>
+</nav>
+<div style="margin-top: auto; display: flex; align-items: center; gap: 12px; padding: 8px 6px">
+<div aria-hidden="true" style="width: 40px; height: 40px; flex-shrink: 0; border-radius: 999px; background: #EEF1FC; color: #1F3AA8; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px">US</div>
+<sc-if value="{{sideOpen}}" hint-placeholder-val="{{ true }}">
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column">
+<span style="font-size: 14px; font-weight: 600">[USUARIO]</span>
+<span style="font-size: 12px; color: #5A5D66">[correo@dominio.com]</span>
+</div>
+</sc-if>
+<button class="ghost" onClick="{{logout}}" aria-label="Cerrar sesión" style="width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: transparent; border: none; border-radius: 8px; color: #5A5D66">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+</button>
+</div>
+</aside>
+
+<main style="flex-grow: 1; min-width: 0; height: 960px; box-sizing: border-box; padding: 40px 48px; display: flex; flex-direction: column; overflow: hidden">
+
+<sc-if value="{{isStock}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 24px">
+<header style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -0.02em">Mis simulaciones</h1>
+<p style="margin: 0; font-size: 15px; color: #5A5D66">Selecciona una acción para ver sus simulaciones guardadas.</p>
+</header>
+<div style="display: flex; gap: 16px; align-items: center">
+<button onClick="{{openAdd}}" aria-label="Agregar acción" style="width: 56px; height: 56px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #16181D; color: #FFFFFF; border: none; border-radius: 10px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+</button>
+<label style="flex-grow: 1; height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 18px; background: #FFFFFF; border: 1px solid #DEDCD5; border-radius: 10px; box-sizing: border-box">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5A5D66" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg>
+<input type="search" value="{{query}}" onChange="{{onSearch}}" placeholder="Buscar por nombre o ticker" aria-label="Buscar acción" style="flex-grow: 1; height: 100%; border: none; outline: none; box-shadow: none; background: transparent; font-size: 16px; color: #16181D">
+</label>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px">
+<sc-for list="{{stocks}}" as="s" hint-placeholder-count="6">
+<button class="card" onClick="{{s.open}}" style="height: 196px; box-sizing: border-box; padding: 26px 32px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; background: #FFFFFF; border: 1px solid #DEDCD5; border-radius: 14px; color: #16181D; transition: border-color .15s, box-shadow .15s">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 28px; font-weight: 600; letter-spacing: -0.01em">{{s.name}}</div>
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #5A5D66">{{s.ticker}}</span>
+<span style="height: 22px; padding: 0 8px; display: flex; align-items: center; border-radius: 6px; background: #F4F3EF; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500; color: #3E4149">{{s.modelTag}}</span>
+</div>
+</div>
+<span style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px; background: #EEF1FC; color: #1F3AA8; font-size: 13px; font-weight: 500">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"></polyline></svg>
+{{s.countTxt}}
+</span>
+</div>
+<div style="display: flex; gap: 32px; align-items: baseline; width: 100%; font-size: 16px; white-space: nowrap">
+<span>S₀: <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500">{{s.s0Txt}}</span></span>
+<span>Volatilidad: <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500">{{s.volTxt}}</span></span>
+<span>Tendencia: <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 500">{{s.trendTxt}}</span></span>
+<span style="margin-left: auto; font-size: 14px; font-weight: 500; color: #2F4FD8">Ver →</span>
+</div>
+</button>
+</sc-for>
+</div>
+<sc-if value="{{noResults}}" hint-placeholder-val="{{ false }}">
+<p style="margin: 0; font-size: 15px; color: #5A5D66">No hay acciones que coincidan con la búsqueda.</p>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{isDetail}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 24px; height: 100%">
+<header style="display: flex; justify-content: space-between; align-items: flex-end; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<button onClick="{{goStock}}" style="align-self: flex-start; padding: 0; display: flex; align-items: center; gap: 6px; background: transparent; border: none; font-size: 14px; font-weight: 500; color: #2F4FD8">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+Volver a Mis simulaciones
+</button>
+<div style="display: flex; align-items: baseline; gap: 14px">
+<h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -0.02em">{{cur.name}}</h1>
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; color: #5A5D66">{{cur.ticker}}</span>
+</div>
+</div>
+<div style="display: flex; gap: 8px">
+<button class="ghost" onClick="{{openEdit}}" style="height: 48px; padding: 0 16px; display: flex; align-items: center; gap: 8px; background: #FFFFFF; color: #16181D; border: 1px solid #DEDCD5; border-radius: 10px; font-size: 15px; font-weight: 500">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+Editar
+</button>
+<button class="danger" onClick="{{openDelStock}}" style="height: 48px; padding: 0 16px; display: flex; align-items: center; gap: 8px; background: #FFFFFF; color: #B42318; border: 1px solid #DEDCD5; border-radius: 10px; font-size: 15px; font-weight: 500">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
+Eliminar
+</button>
+<button onClick="{{newSimForCur}}" style="height: 48px; padding: 0 20px; display: flex; align-items: center; gap: 10px; background: #16181D; color: #FFFFFF; border: none; border-radius: 10px; font-size: 15px; font-weight: 500">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+Nueva simulación
+</button>
+</div>
+</header>
+
+<div style="display: flex; gap: 24px; flex-grow: 1; min-height: 0">
+<section style="width: 360px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; min-height: 0">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">Simulaciones guardadas <span style="font-family: 'IBM Plex Mono', monospace; color: #5A5D66; font-weight: 500">({{histCount}})</span></h2>
+<div style="display: flex; flex-direction: column; gap: 10px; overflow-y: auto; min-height: 0">
+<sc-for list="{{hist}}" as="h" hint-placeholder-count="2">
+<button class="row" onClick="{{h.pick}}" aria-pressed="{{h.on}}" style="box-sizing: border-box; width: 100%; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; text-align: left; border-radius: 12px; border: 1px solid {{h.border}}; background: {{h.bg}}; color: #16181D">
+<div style="display: flex; justify-content: space-between; align-items: baseline; width: 100%">
+<span style="font-size: 15px; font-weight: 600">{{h.modelShort}}</span>
+<span style="font-size: 13px; color: #5A5D66">{{h.date}}</span>
+</div>
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #3E4149">{{h.summary}}</span>
+</button>
+</sc-for>
+<sc-if value="{{histMore}}" hint-placeholder-val="{{ false }}">
+<button class="ghost" style="height: 44px; background: transparent; border: 1px dashed #C9C6BD; border-radius: 10px; font-size: 14px; font-weight: 500; color: #3E4149">Cargar más</button>
+</sc-if>
+<sc-if value="{{histEmpty}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 24px 20px; border: 1px dashed #C9C6BD; border-radius: 12px; display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 15px; font-weight: 600">Aún no hay simulaciones</span>
+<span style="font-size: 14px; color: #5A5D66">Crea una simulación para esta acción y quedará guardada aquí.</span>
+</div>
+</sc-if>
+</div>
+</section>
+
+<section style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 24px; background: #FFFFFF; border: 1px solid #DEDCD5; border-radius: 14px; display: flex; flex-direction: column; gap: 16px">
+<sc-if value="{{hasSaved}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 18px; font-weight: 600">{{saved.modelLong}}</span>
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5A5D66">{{saved.meta}}</span>
+</div>
+<button class="danger" onClick="{{openDelSim}}" aria-label="Eliminar simulación" style="width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: transparent; border: 1px solid #DEDCD5; border-radius: 10px; color: #B42318">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
+</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{saved.params}}" as="p" hint-placeholder-count="5">
+<div style="padding: 10px 12px; background: #F4F3EF; border-radius: 10px; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 12px; color: #5A5D66">{{p.label}}</span>
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 500">{{p.value}}</span>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{ld.ready}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="position: relative">
+<svg width="100%" viewBox="{{ch.vb}}" fill="none" role="img" aria-label="Trayectoria simulada del precio" onMouseMove="{{ch.onMove}}" onMouseLeave="{{ch.onLeave}}" style="display: block; height: auto; cursor: crosshair">
+<sc-for list="{{ch.gy}}" as="g" hint-placeholder-count="6">
+<line x1="{{ch.L}}" x2="{{ch.R}}" y1="{{g.y}}" y2="{{g.y}}" stroke="#ECEBE6" stroke-width="1"></line>
+<text x="48" y="{{g.ty}}" text-anchor="end" fill="#5A5D66" font-size="12" font-family="IBM Plex Mono, monospace">{{g.label}}</text>
+</sc-for>
+<sc-for list="{{ch.gx}}" as="g" hint-placeholder-count="9">
+<line x1="{{g.x}}" x2="{{g.x}}" y1="{{ch.T}}" y2="{{ch.B}}" stroke="#ECEBE6" stroke-width="1"></line>
+<text x="{{g.x}}" y="{{ch.axisY}}" text-anchor="middle" fill="#5A5D66" font-size="12" font-family="IBM Plex Mono, monospace">{{g.label}}</text>
+</sc-for>
+<line x1="{{ch.L}}" x2="{{ch.R}}" y1="{{ch.baseY}}" y2="{{ch.baseY}}" stroke="{{faint}}" stroke-width="1.5" stroke-dasharray="6 5"></line>
+<polyline points="{{ch.line}}" stroke="{{accent}}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>
+<line x1="{{ch.headX}}" x2="{{ch.headX}}" y1="{{ch.T}}" y2="{{ch.B}}" stroke="#16181D" stroke-opacity="0.25" stroke-width="1"></line>
+<circle cx="{{ch.headX}}" cy="{{ch.headY}}" r="6" fill="{{accent}}" stroke="#FFFFFF" stroke-width="3"></circle>
+<sc-if value="{{ch.hovering}}" hint-placeholder-val="{{ false }}">
+<line x1="{{ch.hx}}" x2="{{ch.hx}}" y1="{{ch.T}}" y2="{{ch.B}}" stroke="#9A9CA3" stroke-dasharray="4 4" stroke-width="1"></line>
+<circle cx="{{ch.hx}}" cy="{{ch.hy}}" r="4" fill="#FFFFFF" stroke="{{accent}}" stroke-width="2"></circle>
+</sc-if>
+</svg>
+<sc-if value="{{ch.hovering}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: {{ch.tipLeft}}; top: {{ch.tipTop}}; pointer-events: none; white-space: nowrap; padding: 8px 12px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; box-shadow: 0 4px 12px rgba(22,24,29,0.12); font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #1E293B">{{ch.tip}}</div>
+</sc-if>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; padding-left: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5A5D66">
+<span><span style="font-weight: 500; color: #334155">Tick:</span> <span style="color: #16181D">{{ch.lgStep}}</span></span>
+<span><span style="font-weight: 500; color: #334155">t:</span> <span style="color: #16181D">{{ch.lgT}} a</span></span>
+<span style="display: flex; align-items: center; gap: 8px"><span style="width: 16px; height: 3px; border-radius: 2px; background: {{accent}}"></span><span style="font-weight: 500; color: #334155">Precio:</span> <span style="color: #16181D">{{ch.lgS}}</span></span>
+<span style="display: flex; align-items: center; gap: 8px"><span style="width: 16px; height: 0; border-top: 2px dashed {{faint}}"></span><span style="font-weight: 500; color: #334155">S₀:</span> <span style="color: #16181D">{{ch.lgS0}}</span></span>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 12px">
+<button type="button" class="ghost" onClick="{{pl.reset}}" aria-label="Reiniciar" style="width: 48px; height: 48px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #FFFFFF; border: 1px solid #DEDCD5; border-radius: 10px; color: #16181D">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"></polygon><rect x="4" y="4" width="2.5" height="16" rx="1"></rect></svg>
+</button>
+<button type="button" onClick="{{pl.toggle}}" aria-label="{{pl.toggleLabel}}" style="width: 56px; height: 48px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #16181D; border: none; border-radius: 999px; color: #FFFFFF">
+<sc-if value="{{pl.playing}}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg></sc-if>
+<sc-if value="{{pl.paused}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="7 4 20 12 7 20 7 4"></polygon></svg></sc-if>
+</button>
+<div style="flex-grow: 1; min-width: 0; padding: 0 8px; display: flex; align-items: center">
+<input class="scrub" type="range" min="0" max="1000" step="1" value="{{pl.pos}}" onChange="{{pl.seek}}" aria-label="Posición de la simulación" style="width: 100%; background: {{pl.track}}">
+</div>
+<span style="flex-shrink: 0; min-width: 170px; text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #334155">{{pl.label}}</span>
+<div role="group" aria-label="Velocidad de reproducción" style="flex-shrink: 0; display: flex; gap: 2px; padding: 3px; background: #F4F3EF; border-radius: 9px">
+<sc-for list="{{pl.speeds}}" as="v" hint-placeholder-count="4">
+<button type="button" onClick="{{v.pick}}" aria-pressed="{{v.on}}" style="height: 34px; min-width: 40px; padding: 0 8px; border: none; border-radius: 7px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500; background: {{v.bg}}; color: {{v.fg}}; box-shadow: {{v.shadow}}">{{v.label}}</button>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ld.loading}}" hint-placeholder-val="{{ false }}">
+<div role="status" style="height: 420px; box-sizing: border-box; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px; background: #F4F3EF">
+<svg class="spin" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.2-8.56"></path></svg>
+<span style="font-size: 15px; font-weight: 500">Cargando trayectoria…</span>
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5A5D66">GET /simulations/{{ld.simId}}/ticks</span>
+</div>
+</sc-if>
+<sc-if value="{{ld.error}}" hint-placeholder-val="{{ false }}">
+<div role="alert" style="height: 420px; box-sizing: border-box; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px; background: #FDF3F2; border: 1px solid #F4C7C3">
+<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="8" x2="12" y2="12.5"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+<span style="font-size: 15px; font-weight: 600; color: #7A1A12">{{ld.errTitle}}</span>
+<span style="max-width: 420px; font-size: 14px; color: #5A5D66">{{ld.errBody}}</span>
+<button type="button" class="ghost" onClick="{{ld.retry}}" style="height: 40px; padding: 0 16px; background: #FFFFFF; border: 1px solid #DEDCD5; border-radius: 10px; font-size: 14px; font-weight: 500; color: #16181D">Reintentar</button>
+</div>
+</sc-if>
+</div>
+</sc-if>
+<sc-if value="{{noSaved}}" hint-placeholder-val="{{ false }}">
+<div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center; color: #5A5D66">
+<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9A9CA3" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"></polyline><polyline points="15 7 21 7 21 13"></polyline></svg>
+<span style="font-size: 15px">Selecciona una simulación guardada o crea una nueva.</span>
+</div>
+</sc-if>
+</section>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isSim}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 20px; height: 100%">
+<header style="display: flex; justify-content: space-between; align-items: flex-end; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -0.02em">Nueva simulación</h1>
+<p style="margin: 0; font-size: 15px; color: #5A5D66">Al simular se crea la simulación (POST /simulations) y el servidor devuelve la trayectoria (GET /simulations/{id}/ticks).</p>
+</div>
+<label style="width: 288px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">
+Acción
+<select value="{{simStock}}" onChange="{{pickStock}}" style="height: 48px; padding: 0 12px; border: 1px solid #DEDCD5; border-radius: 10px; background: #FFFFFF; font-size: 15px; color: #16181D">
+<option value="">Sin acción</option>
+<sc-for list="{{stockOpts}}" as="o" hint-placeholder-count="6">
+<option value="{{o.id}}">{{o.ticker}} · {{o.name}}</option>
+</sc-for>
+</select>
+</label>
+</header>
+
+<div style="flex-grow: 1; min-height: 0; display: flex; background: #FFFFFF; border: 1px solid #DEDCD5; border-radius: 14px; overflow: hidden">
+<form style="width: 356px; flex-shrink: 0; box-sizing: border-box; display: flex; flex-direction: column; margin: 0; min-height: 0">
+<div style="flex-grow: 1; min-height: 0; overflow-y: auto; padding: 24px 24px 12px; display: flex; flex-direction: column; gap: 16px">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">
+Modelo (model_type)
+<select value="{{form.model}}" onChange="{{setModel}}" style="height: 44px; padding: 0 12px; border: 1px solid #DEDCD5; border-radius: 10px; background: #FFFFFF; font-size: 15px; color: #16181D">
+<option value="gbm">GBM · Browniano geométrico</option>
+<option value="merton">Merton · Saltos</option>
+<option value="ou">OU · Reversión a la media</option>
+<option value="heston">Heston · Volatilidad estocástica</option>
+</select>
+</label>
+<div style="padding: 10px 12px; background: #F4F3EF; border-radius: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; line-height: 1.5; white-space: pre-line">{{formula}}</div>
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5A5D66">Parámetros base</span>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{baseFields}}" as="fl" hint-placeholder-count="6">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">
+{{fl.label}}
+<input type="number" step="any" value="{{fl.value}}" onChange="{{fl.set}}" style="width: 100%; height: 44px; box-sizing: border-box; padding: 0 12px; border: 1px solid {{fl.border}}; border-radius: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 14px">
+</label>
+</sc-for>
+</div>
+<button type="button" class="ghost" onClick="{{newSeed}}" style="align-self: flex-start; height: 36px; padding: 0 12px; display: flex; align-items: center; gap: 8px; background: #FFFFFF; border: 1px solid #DEDCD5; border-radius: 8px; font-size: 13px; font-weight: 500; color: #16181D">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor"></circle><circle cx="15.5" cy="15.5" r="1.2" fill="currentColor"></circle><circle cx="15.5" cy="8.5" r="1.2" fill="currentColor"></circle><circle cx="8.5" cy="15.5" r="1.2" fill="currentColor"></circle></svg>
+Nueva semilla
+</button>
+<sc-if value="{{hasExtra}}" hint-placeholder-val="{{ false }}">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #5A5D66">Parámetros del modelo (extra_params)</span>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{extraFields}}" as="fl" hint-placeholder-count="3">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500">
+{{fl.label}}
+<input type="number" step="any" value="{{fl.value}}" onChange="{{fl.set}}" style="width: 100%; height: 44px; box-sizing: border-box; padding: 0 12px; border: 1px solid {{fl.border}}; border-radius: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 14px">
+</label>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{invalid}}" hint-placeholder-val="{{ false }}">
+<p style="margin: 0; font-size: 13px; color: #B42318">{{invalidMsg}}</p>
+</sc-if>
+</div>
+<div style="padding: 12px 24px 24px; border-top: 1px solid #ECEBE6">
+<button type="button" onClick="{{save}}" disabled="{{saveDisabled}}" style="width: 100%; height: 48px; display: flex; align-items: center; justify-content: center; gap: 10px; background: #16181D; color: #FFFFFF; border: none; border-radius: 10px; font-size: 15px; font-weight: 500">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="7 4 20 12 7 20 7 4"></polygon></svg>
+Simular y guardar
+</button>
+</div>
+</form>
+
+<div aria-hidden="true" style="width: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: col-resize">
+<div style="width: 4px; height: 40px; border-radius: 999px; background: #DEDCD5"></div>
+</div>
+
+<section style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">Trayectoria · {{simTicker}}</h2>
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #5A5D66">{{runMeta}}</span>
+</div>
+<sc-if value="{{runSaved}}" hint-placeholder-val="{{ false }}">
+<div role="status" style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #EEF7F1; border: 1px solid #BFE3CB; border-radius: 10px; font-size: 14px; color: #14532D">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+<span style="flex-grow: 1">{{runSavedTxt}}</span>
+<sc-if value="{{runHasStock}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{openRunInHistory}}" style="padding: 0; background: none; border: none; font-size: 14px; font-weight: 500; color: #2F4FD8">Ver en historial →</button></sc-if>
+</div>
+</sc-if>
+<sc-if value="{{ld.ready}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 18px">
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{ch.stats}}" as="t" hint-placeholder-count="4">
+<div style="padding: 12px 14px; background: #F4F3EF; border-radius: 10px; display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; color: #5A5D66">{{t.label}}</span><span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 500">{{t.value}}</span></div>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="position: relative">
+<svg width="100%" viewBox="{{ch.vb}}" fill="none" role="img" aria-label="Trayectoria simulada del precio" onMouseMove="{{ch.onMove}}" onMouseLeave="{{ch.onLeave}}" style="display: block; height: auto; cursor: crosshair">
+<sc-for list="{{ch.gy}}" as="g" hint-placeholder-count="6">
+<line x1="{{ch.L}}" x2="{{ch.R}}" y1="{{g.y}}" y2="{{g.y}}" stroke="#ECEBE6" stroke-width="1"></line>
+<text x="48" y="{{g.ty}}" text-anchor="end" fill="#5A5D66" font-size="12" font-family="IBM Plex Mono, monospace">{{g.label}}</text>
+</sc-for>
+<sc-for list="{{ch.gx}}" as="g" hint-placeholder-count="9">
+<line x1="{{g.x}}" x2="{{g.x}}" y1="{{ch.T}}" y2="{{ch.B}}" stroke="#ECEBE6" stroke-width="1"></line>
+<text x="{{g.x}}" y="{{ch.axisY}}" text-anchor="middle" fill="#5A5D66" font-size="12" font-family="IBM Plex Mono, monospace">{{g.label}}</text>
+</sc-for>
+<line x1="{{ch.L}}" x2="{{ch.R}}" y1="{{ch.baseY}}" y2="{{ch.baseY}}" stroke="{{faint}}" stroke-width="1.5" stroke-dasharray="6 5"></line>
+<polyline points="{{ch.line}}" stroke="{{accent}}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>
+<line x1="{{ch.headX}}" x2="{{ch.headX}}" y1="{{ch.T}}" y2="{{ch.B}}" stroke="#16181D" stroke-opacity="0.25" stroke-width="1"></line>
+<circle cx="{{ch.headX}}" cy="{{ch.headY}}" r="6" fill="{{accent}}" stroke="#FFFFFF" stroke-width="3"></circle>
+<sc-if value="{{ch.hovering}}" hint-placeholder-val="{{ false }}">
+<line x1="{{ch.hx}}" x2="{{ch.hx}}" y1="{{ch.T}}" y2="{{ch.B}}" stroke="#9A9CA3" stroke-dasharray="4 4" stroke-width="1"></line>
+<circle cx="{{ch.hx}}" cy="{{ch.hy}}" r="4" fill="#FFFFFF" stroke="{{accent}}" stroke-width="2"></circle>
+</sc-if>
+</svg>
+<sc-if value="{{ch.hovering}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: {{ch.tipLeft}}; top: {{ch.tipTop}}; pointer-events: none; white-space: nowrap; padding: 8px 12px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; box-shadow: 0 4px 12px rgba(22,24,29,0.12); font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #1E293B">{{ch.tip}}</div>
+</sc-if>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; padding-left: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5A5D66">
+<span><span style="font-weight: 500; color: #334155">Tick:</span> <span style="color: #16181D">{{ch.lgStep}}</span></span>
+<span><span style="font-weight: 500; color: #334155">t:</span> <span style="color: #16181D">{{ch.lgT}} a</span></span>
+<span style="display: flex; align-items: center; gap: 8px"><span style="width: 16px; height: 3px; border-radius: 2px; background: {{accent}}"></span><span style="font-weight: 500; color: #334155">Precio:</span> <span style="color: #16181D">{{ch.lgS}}</span></span>
+<span style="display: flex; align-items: center; gap: 8px"><span style="width: 16px; height: 0; border-top: 2px dashed {{faint}}"></span><span style="font-weight: 500; color: #334155">S₀:</span> <span style="color: #16181D">{{ch.lgS0}}</span></span>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 12px">
+<button type="button" class="ghost" onClick="{{pl.reset}}" aria-label="Reiniciar" style="width: 48px; height: 48px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #FFFFFF; border: 1px solid #DEDCD5; border-radius: 10px; color: #16181D">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"></polygon><rect x="4" y="4" width="2.5" height="16" rx="1"></rect></svg>
+</button>
+<button type="button" onClick="{{pl.toggle}}" aria-label="{{pl.toggleLabel}}" style="width: 56px; height: 48px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #16181D; border: none; border-radius: 999px; color: #FFFFFF">
+<sc-if value="{{pl.playing}}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg></sc-if>
+<sc-if value="{{pl.paused}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="7 4 20 12 7 20 7 4"></polygon></svg></sc-if>
+</button>
+<div style="flex-grow: 1; min-width: 0; padding: 0 8px; display: flex; align-items: center">
+<input class="scrub" type="range" min="0" max="1000" step="1" value="{{pl.pos}}" onChange="{{pl.seek}}" aria-label="Posición de la simulación" style="width: 100%; background: {{pl.track}}">
+</div>
+<span style="flex-shrink: 0; min-width: 170px; text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #334155">{{pl.label}}</span>
+<div role="group" aria-label="Velocidad de reproducción" style="flex-shrink: 0; display: flex; gap: 2px; padding: 3px; background: #F4F3EF; border-radius: 9px">
+<sc-for list="{{pl.speeds}}" as="v" hint-placeholder-count="4">
+<button type="button" onClick="{{v.pick}}" aria-pressed="{{v.on}}" style="height: 34px; min-width: 40px; padding: 0 8px; border: none; border-radius: 7px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500; background: {{v.bg}}; color: {{v.fg}}; box-shadow: {{v.shadow}}">{{v.label}}</button>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ld.loading}}" hint-placeholder-val="{{ false }}">
+<div role="status" style="height: 560px; box-sizing: border-box; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px; background: #F4F3EF">
+<svg class="spin" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="{{accent}}" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.2-8.56"></path></svg>
+<span style="font-size: 15px; font-weight: 500">Cargando trayectoria…</span>
+<span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5A5D66">GET /simulations/{{ld.simId}}/ticks</span>
+</div>
+</sc-if>
+<sc-if value="{{ld.error}}" hint-placeholder-val="{{ false }}">
+<div role="alert" style="height: 560px; box-sizing: border-box; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px; background: #FDF3F2; border: 1px solid #F4C7C3">
+<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="8" x2="12" y2="12.5"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+<span style="font-size: 15px; font-weight: 600; color: #7A1A12">{{ld.errTitle}}</span>
+<span style="max-width: 420px; font-size: 14px; color: #5A5D66">{{ld.errBody}}</span>
+<button type="button" class="ghost" onClick="{{ld.retry}}" style="height: 40px; padding: 0 16px; background: #FFFFFF; border: 1px solid #DEDCD5; border-radius: 10px; font-size: 14px; font-weight: 500; color: #16181D">Reintentar</button>
+</div>
+</sc-if>
+<sc-if value="{{ld.idle}}" hint-placeholder-val="{{ true }}">
+<div style="height: 560px; box-sizing: border-box; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px; border: 1px dashed #C9C6BD">
+<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9A9CA3" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"></polyline><polyline points="15 7 21 7 21 13"></polyline></svg>
+<span style="font-size: 15px; font-weight: 600">Aún no hay trayectoria</span>
+<span style="max-width: 440px; font-size: 14px; color: #5A5D66">{{ld.idleMsg}}</span>
+</div>
+</sc-if>
+</section>
+</div>
+</div>
+</sc-if>
+
+</main>
+</sc-if>
+
+<sc-if value="{{hasDialog}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; inset: 0; background: rgba(22,24,29,0.45); display: flex; align-items: center; justify-content: center">
+<div role="dialog" aria-modal="true" aria-label="{{dlg.title}}" style="width: 440px; box-sizing: border-box; padding: 28px; background: #FFFFFF; border-radius: 16px; box-shadow: 0 20px 50px rgba(22,24,29,0.25); display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h2 style="margin: 0; font-size: 20px; font-weight: 600">{{dlg.title}}</h2>
+<p style="margin: 0; font-size: 14px; color: #5A5D66">{{dlg.body}}</p>
+</div>
+<sc-if value="{{dlg.showTicker}}" hint-placeholder-val="{{ true }}">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">
+Ticker
+<input type="text" value="{{dlgTicker}}" onChange="{{setDlgTicker}}" placeholder="AAPL" style="height: 48px; box-sizing: border-box; padding: 0 12px; border: 1px solid #DEDCD5; border-radius: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 15px; text-transform: uppercase">
+</label>
+</sc-if>
+<sc-if value="{{dlg.showName}}" hint-placeholder-val="{{ true }}">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500">
+Nombre
+<input type="text" value="{{dlgName}}" onChange="{{setDlgName}}" placeholder="Apple Inc." style="height: 48px; box-sizing: border-box; padding: 0 12px; border: 1px solid #DEDCD5; border-radius: 10px; font-size: 15px">
+</label>
+</sc-if>
+<div style="display: flex; justify-content: flex-end; gap: 8px">
+<button type="button" class="ghost" onClick="{{closeDialog}}" style="height: 44px; padding: 0 16px; background: #FFFFFF; border: 1px solid #DEDCD5; border-radius: 10px; font-size: 15px; font-weight: 500; color: #16181D">Cancelar</button>
+<button type="button" onClick="{{dlg.confirm}}" disabled="{{dlg.disabled}}" style="height: 44px; padding: 0 18px; background: {{dlg.btnBg}}; border: none; border-radius: 10px; font-size: 15px; font-weight: 500; color: #FFFFFF">{{dlg.cta}}</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#2F4FD8","options":["#2F4FD8","#D9622B","#0F7B6C","#16181D"]},"startView":{"editor":"enum","options":["login","register","stock","detail","sim"],"default":"login"},"apiState":{"editor":"enum","options":["auto","loading","error413","error404"],"default":"auto"},"$preview":{"width":1440,"height":960}}'>
+/* Example data shaped like GET /profile → ProfileWithData.stocks (StockWithSimulations). */
+var SEED_STOCKS = [
+  { id: 's-aapl', ticker: 'AAPL', name: 'APPLE', model_type: 'gbm', initial_price: 100, drift: 0.4, volatility: 0.4 },
+  { id: 's-msft', ticker: 'MSFT', name: 'MICROSOFT', model_type: 'merton', initial_price: 100, drift: 0.4, volatility: 0.4 },
+  { id: 's-googl', ticker: 'GOOGL', name: 'ALPHABET', model_type: 'heston', initial_price: 100, drift: 0.4, volatility: 0.4 },
+  { id: 's-amzn', ticker: 'AMZN', name: 'AMAZON', model_type: 'ou', initial_price: 100, drift: 0.4, volatility: 0.4 },
+  { id: 's-nvda', ticker: 'NVDA', name: 'NVIDIA', model_type: 'gbm', initial_price: 100, drift: 0.4, volatility: 0.4 },
+  { id: 's-tsla', ticker: 'TSLA', name: 'TESLA', model_type: 'gbm', initial_price: 100, drift: 0.4, volatility: 0.4 }
+];
+/* Shaped like SimulationResponse (parameters.extra_params is the tagged ModelParams). */
+var SEED_SIMS = [
+  { id: 'sim-1', stock_id: 's-aapl', model_type: 'gbm', time_horizon: 1, steps: 252, random_seed: 42, created_at: '[FECHA]',
+    parameters: { initial_price: 100, drift: 0.4, volatility: 0.4, extra_params: { model: 'gbm' } } },
+  { id: 'sim-2', stock_id: 's-aapl', model_type: 'merton', time_horizon: 1, steps: 252, random_seed: 7, created_at: '[FECHA]',
+    parameters: { initial_price: 100, drift: 0.1, volatility: 0.25, extra_params: { model: 'merton', jump_intensity: 5, jump_mean: -0.05, jump_volatility: 0.1 } } },
+  { id: 'sim-3', stock_id: 's-aapl', model_type: 'heston', time_horizon: 0.5, steps: 126, random_seed: 2024, created_at: '[FECHA]',
+    parameters: { initial_price: 100, drift: 0.05, volatility: 0.2, extra_params: { model: 'heston', initial_variance: 0.04, mean_reversion: 2, reversion_level: 0.04, vol_of_vol: 0.5, correlation: -0.7 } } },
+  { id: 'sim-4', stock_id: 's-msft', model_type: 'ou', time_horizon: 1, steps: 252, random_seed: 11, created_at: '[FECHA]',
+    parameters: { initial_price: 100, drift: 0, volatility: 0.3, extra_params: { model: 'ou', mean_reversion: 3, reversion_level: 120 } } }
+];
+var MODELS = {
+  gbm: { short: 'GBM', long: 'Browniano geométrico (GBM)', formula: 'dS = μ·S dt + σ·S dW' },
+  merton: { short: 'Merton', long: 'Merton · difusión con saltos', formula: 'dS = μ·S dt + σ·S dW + S·(J − 1) dN\nN ~ Poisson(λ),  ln J ~ N(m, δ²)' },
+  ou: { short: 'Ornstein-Uhlenbeck', long: 'Ornstein-Uhlenbeck · reversión a la media', formula: 'dS = κ·(L − S) dt + σ·S dW' },
+  heston: { short: 'Heston', long: 'Heston · volatilidad estocástica', formula: 'dS = μ·S dt + √v·S dW₁\ndv = κ·(θ − v) dt + ξ·√v dW₂,  ρ = corr(W₁, W₂)' }
+};
+var EXTRA = {
+  gbm: [],
+  merton: [{ k: 'jump_intensity', label: 'Intensidad λ', def: '5' }, { k: 'jump_mean', label: 'Media salto m', def: '-0.05' }, { k: 'jump_volatility', label: 'Vol. salto δ', def: '0.1' }],
+  ou: [{ k: 'mean_reversion', label: 'Reversión κ', def: '3' }, { k: 'reversion_level', label: 'Nivel L', def: '120' }],
+  heston: [{ k: 'initial_variance', label: 'Varianza v₀', def: '0.04' }, { k: 'mean_reversion', label: 'Reversión κ', def: '2' }, { k: 'reversion_level', label: 'Nivel θ', def: '0.04' }, { k: 'vol_of_vol', label: 'Vol. de vol ξ', def: '0.5' }, { k: 'correlation', label: 'Correlación ρ', def: '-0.7' }]
+};
+var BASE = [
+  { k: 'initial_price', label: 'Precio inicial S₀' }, { k: 'drift', label: 'Tendencia μ' },
+  { k: 'volatility', label: 'Volatilidad σ' }, { k: 'time_horizon', label: 'Horizonte T (años)' },
+  { k: 'steps', label: 'Pasos' }, { k: 'random_seed', label: 'Semilla' }
+];
+function rng(seed) {
+  var a = (Number(seed) >>> 0) || 1;
+  return function () { a = (a + 0x6D2B79F5) >>> 0; var t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+function gauss(r) { var u = r() || 1e-12, v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+function poisson(r, lam) { var L = Math.exp(-lam), k = 0, p = 1; do { k++; p *= r(); } while (p > L); return k - 1; }
+/* Seeded Euler–Maruyama path. Same inputs (incl. seed) → same path. */
+function simulate(s) {
+  var p = s.parameters, x = p.extra_params || {}, n = Math.max(1, Math.round(s.steps)), dt = s.time_horizon / n, r = rng(s.random_seed);
+  var S = p.initial_price, path = [S], v = x.initial_variance || 0;
+  for (var i = 0; i < n; i++) {
+    var z = gauss(r);
+    if (s.model_type === 'gbm') S *= Math.exp((p.drift - 0.5 * p.volatility * p.volatility) * dt + p.volatility * Math.sqrt(dt) * z);
+    else if (s.model_type === 'merton') {
+      var k = Math.exp(x.jump_mean + 0.5 * x.jump_volatility * x.jump_volatility) - 1;
+      var jumps = poisson(r, x.jump_intensity * dt), J = 0;
+      for (var j = 0; j < jumps; j++) J += x.jump_mean + x.jump_volatility * gauss(r);
+      S *= Math.exp((p.drift - 0.5 * p.volatility * p.volatility - x.jump_intensity * k) * dt + p.volatility * Math.sqrt(dt) * z + J);
+    } else if (s.model_type === 'ou') S = Math.max(0, S + x.mean_reversion * (x.reversion_level - S) * dt + p.volatility * S * Math.sqrt(dt) * z);
+    else {
+      var z2 = x.correlation * z + Math.sqrt(Math.max(0, 1 - x.correlation * x.correlation)) * gauss(r), vp = Math.max(v, 0);
+      S *= Math.exp((p.drift - 0.5 * vp) * dt + Math.sqrt(vp * dt) * z);
+      v = v + x.mean_reversion * (x.reversion_level - vp) * dt + x.vol_of_vol * Math.sqrt(vp * dt) * z2;
+    }
+    path.push(S);
+  }
+  return path;
+}
+function fmt(v) { return (Math.round(v * 100) / 100).toFixed(2).replace('.', ','); }
+function plain(v) { return String(v).replace('.', ','); }
+function niceStep(range, target) { var raw = range / target || 1, mag = Math.pow(10, Math.floor(Math.log10(raw))), n = raw / mag; return (n < 1.5 ? 1 : n < 3 ? 2 : n < 7 ? 5 : 10) * mag; }
+/* Mock of GET /simulations/{id}/ticks → TicksResponse. In the app, this JSON comes from the Rust engine. */
+var TICK_LIMIT = 20000;
+function mockTicks(sim) {
+  var ticks = simulate(sim), n = ticks.length - 1, times = [];
+  for (var i = 0; i <= n; i++) times.push(sim.time_horizon * i / n);
+  return { simulation_id: sim.id, model_type: sim.model_type, time_horizon: sim.time_horizon, steps: sim.steps, random_seed: sim.random_seed, ticks: ticks, times: times };
+}
+/* Chart geometry from TicksResponse: x = times (years), y = ticks (price). */
+function buildChart(tk, W, H, prog, hoverIdx) {
+  var path = tk.ticks, times = tk.times, Tmax = tk.time_horizon || times[times.length - 1] || 1;
+  var L = 56, R = 28, T = 12, B = 30, pw = W - L - R, ph = H - T - B, n = path.length - 1, S0 = path[0];
+  var lo = Math.min.apply(null, path), hi = Math.max.apply(null, path);
+  var pad = (hi - lo) * 0.08 || Math.max(1, S0 * 0.05); lo = Math.min(lo, S0) - pad; hi = Math.max(hi, S0) + pad;
+  function x(t) { return L + t / Tmax * pw; }
+  function y(v) { return T + (1 - (v - lo) / (hi - lo)) * ph; }
+  var cur = Math.max(1, Math.round(prog * n)), pts = [];
+  for (var i = 0; i <= cur; i++) pts.push(x(times[i]).toFixed(1) + ',' + y(path[i]).toFixed(1));
+  var xs = niceStep(Tmax, 8), gx = [];
+  for (var k = 0; k <= Tmax + 1e-9; k += xs) gx.push({ x: x(k).toFixed(1), label: plain(Math.round(k * 100) / 100) + ' a' });
+  var ys = niceStep(hi - lo, 6), gy = [];
+  for (var v = Math.ceil(lo / ys) * ys; v <= hi; v += ys) gy.push({ y: y(v).toFixed(1), ty: (y(v) + 4).toFixed(1), label: String(Math.round(v * 100) / 100) });
+  var hov = hoverIdx != null && hoverIdx <= cur ? Math.round(hoverIdx) : null;
+  var at = hov != null ? hov : cur, hx = hov != null ? x(times[hov]) : 0;
+  var last = path[n], mn = Math.min.apply(null, path), mx = Math.max.apply(null, path), ret = (last / S0 - 1) * 100;
+  var tOf = function (i) { return times[i].toFixed(3).replace('.', ','); };
+  return {
+    W: W, L: L, R: W - R, T: T, B: H - B, n: n, vb: '0 0 ' + W + ' ' + H, axisY: H - 8,
+    gx: gx, gy: gy, line: pts.join(' '), baseY: y(S0).toFixed(1),
+    headX: x(times[cur]).toFixed(1), headY: y(path[cur]).toFixed(1),
+    hovering: hov != null, hx: hx.toFixed(1), hy: hov != null ? y(path[hov]).toFixed(1) : 0,
+    tipLeft: hov != null ? Math.min((hx + 12) / W * 100, 64).toFixed(2) + '%' : '0%',
+    tipTop: hov != null ? Math.max(0, y(path[hov]) - 44).toFixed(0) + 'px' : '0px',
+    tip: hov != null ? 'Tick ' + hov + ' · t ' + tOf(hov) + ' a · S ' + fmt(path[hov]) : '',
+    lgStep: String(at), lgT: tOf(at), lgS: fmt(path[at]), lgS0: fmt(S0),
+    label: 'Tick ' + cur + '/' + n + ' · S ' + fmt(path[cur]),
+    stats: [{ label: 'Precio final', value: fmt(last) }, { label: 'Retorno', value: (ret >= 0 ? '+' : '') + ret.toFixed(1).replace('.', ',') + '%' }, { label: 'Mínimo', value: fmt(mn) }, { label: 'Máximo', value: fmt(mx) }]
+  };
+}
+function num(s) { var v = parseFloat(String(s).replace(',', '.')); return isFinite(v) ? v : NaN; }
+function today() { try { return new Date().toLocaleString('es-CL', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) { return String(new Date()); } }
+function defaultsFor(stock) {
+  var f = { model: (stock && stock.model_type) || 'gbm', initial_price: String(stock ? stock.initial_price : 100), drift: String(stock ? stock.drift : 0.1),
+    volatility: String(stock ? stock.volatility : 0.2), time_horizon: '1', steps: '252', random_seed: '42' };
+  ['merton', 'ou', 'heston'].forEach(function (m) { EXTRA[m].forEach(function (e) { f[m + '.' + e.k] = e.def; }); });
+  return f;
+}
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      view: props.startView || 'login', sel: 's-aapl', selSim: 'sim-1', simStock: 's-aapl', query: '', sideOpen: true,
+      stocks: SEED_STOCKS, sims: SEED_SIMS, form: defaultsFor(SEED_STOCKS[0]),
+      dialog: null, dlgTicker: '', dlgName: '', prog: 0, playing: true, speed: 1, hover: null,
+      run: null, load: 'ready', err: null, loadFor: 'sim-1'
+    };
+    this._rate = 1 / 6;
+  }
+  componentDidUpdate(prev) { if (prev.startView !== this.props.startView && this.props.startView) this.setState({ view: this.props.startView, prog: 0, playing: true }); }
+  componentDidMount() {
+    var self = this, lastT = null;
+    function tick(ts) {
+      self._raf = requestAnimationFrame(tick);
+      if (lastT == null) { lastT = ts; return; }
+      var dt = Math.min(0.1, (ts - lastT) / 1000); lastT = ts;
+      var st = self.state;
+      if (!st.playing || st.dialog || st.load !== 'ready') return;
+      var next = st.prog + dt * self._rate * st.speed;
+      if (next >= 1) self.setState({ prog: 1, playing: false }); else self.setState({ prog: next });
+    }
+    this._raf = requestAnimationFrame(tick);
+  }
+  componentWillUnmount() { if (this._raf) cancelAnimationFrame(this._raf); if (this._ft) clearTimeout(this._ft); }
+  ticksFor(sim) {
+    var key = JSON.stringify(sim);
+    if (this._pk !== key) { this._pk = key; this._ticks = mockTicks(sim); }
+    return this._ticks;
+  }
+  /* Simulates the network round-trip of GET /simulations/{id}/ticks. */
+  fetchTicks(sim) {
+    var self = this;
+    if (this._ft) clearTimeout(this._ft);
+    this.setState({ load: 'loading', err: null, loadFor: sim.id, prog: 0, playing: false, hover: null });
+    this._ft = setTimeout(function () {
+      if (sim.steps > TICK_LIMIT) self.setState({ load: 'error', err: 413 });
+      else self.setState({ load: 'ready', prog: 0, playing: true });
+    }, 700);
+  }
+  renderVals() {
+    var self = this, st = this.state, view = st.view;
+    var accent = this.props.accent ?? '#2F4FD8';
+    var reset = { prog: 0, playing: true, hover: null };
+    var q = (st.query || '').trim().toLowerCase();
+    function countFor(id) { return st.sims.filter(function (s) { return s.stock_id === id; }).length; }
+    var stocks = st.stocks.filter(function (s) { return !q || s.name.toLowerCase().indexOf(q) >= 0 || s.ticker.toLowerCase().indexOf(q) >= 0; }).map(function (s) {
+      var n = countFor(s.id), has = s.model_type != null;
+      return { name: s.name, ticker: s.ticker, modelTag: has ? MODELS[s.model_type].short : 'Sin modelo', s0Txt: has ? plain(s.initial_price) : '—',
+        volTxt: has ? plain(s.volatility) : '—', trendTxt: has ? plain(s.drift) : '—', countTxt: n === 1 ? '1 simulación' : n + ' simulaciones',
+        open: function () { var list = st.sims.filter(function (x) { return x.stock_id === s.id; }); self.setState(Object.assign({ view: 'detail', sel: s.id, selSim: list.length ? list[0].id : null }, reset)); if (list.length) self.fetchTicks(list[0]); } };
+    });
+    var cur = st.stocks.filter(function (s) { return s.id === st.sel; })[0] || st.stocks[0] || { id: '', name: '', ticker: '' };
+    var list = st.sims.filter(function (s) { return s.stock_id === cur.id; });
+    var hist = list.map(function (s) {
+      var on = s.id === st.selSim;
+      return { modelShort: MODELS[s.model_type].short, date: s.created_at, on: on, bg: on ? '#EEF1FC' : '#FFFFFF', border: on ? '#2F4FD8' : '#DEDCD5',
+        summary: 'T ' + plain(s.time_horizon) + ' a · ' + s.steps + ' pasos · seed ' + s.random_seed,
+        pick: function () { self.setState(Object.assign({ selSim: s.id }, reset)); self.fetchTicks(s); } };
+    });
+    var savedRaw = list.filter(function (s) { return s.id === st.selSim; })[0];
+    var saved = { modelLong: '', meta: '', params: [] };
+    if (savedRaw) {
+      var pr = savedRaw.parameters, ex = pr.extra_params || {};
+      var params = [{ label: 'S₀', value: plain(pr.initial_price) }, { label: 'μ', value: plain(pr.drift) }, { label: 'σ', value: plain(pr.volatility) }];
+      EXTRA[savedRaw.model_type].forEach(function (e) { params.push({ label: e.label, value: plain(ex[e.k]) }); });
+      saved = { modelLong: MODELS[savedRaw.model_type].long, params: params,
+        meta: 'T ' + plain(savedRaw.time_horizon) + ' años · ' + savedRaw.steps + ' pasos · seed ' + savedRaw.random_seed + ' · ' + savedRaw.created_at };
+    }
+
+    var fm = st.form, model = fm.model;
+    function setF(k) { return function (e) { var v = e.target.value; self.setState(function (s) { var f = Object.assign({}, s.form); f[k] = v; return Object.assign({ form: f, run: null }, reset); }); }; }
+    var bad = {};
+    var base = BASE.map(function (b) { var v = num(fm[b.k]); return { k: b.k, label: b.label, value: fm[b.k], set: setF(b.k), n: v }; });
+    var bv = {}; base.forEach(function (b) { bv[b.k] = b.n; });
+    if (!(bv.initial_price > 0)) bad.initial_price = 1;
+    if (!(bv.volatility >= 0)) bad.volatility = 1;
+    if (!(bv.time_horizon > 0)) bad.time_horizon = 1;
+    if (!(bv.steps >= 1) || Math.round(bv.steps) !== bv.steps) bad.steps = 1;
+    if (isNaN(bv.drift)) bad.drift = 1;
+    if (!(bv.random_seed >= 0) || Math.round(bv.random_seed) !== bv.random_seed) bad.random_seed = 1;
+    var extras = EXTRA[model].map(function (e) { var key = model + '.' + e.k, v = num(fm[key]); return { k: e.k, key: key, label: e.label, value: fm[key], set: setF(key), n: v }; });
+    var xv = { model: model };
+    extras.forEach(function (e) {
+      xv[e.k] = e.n;
+      var nonneg = ['jump_intensity', 'jump_volatility', 'mean_reversion', 'initial_variance', 'vol_of_vol'].indexOf(e.k) >= 0 || (model === 'heston' && e.k === 'reversion_level');
+      if (isNaN(e.n) || (nonneg && e.n < 0) || (e.k === 'correlation' && (e.n < -1 || e.n > 1))) bad[e.key] = 1;
+    });
+    var invalid = Object.keys(bad).length > 0;
+    base.forEach(function (b) { b.border = bad[b.k] ? '#B42318' : '#DEDCD5'; });
+    extras.forEach(function (e) { e.border = bad[e.key] ? '#B42318' : '#DEDCD5'; });
+    var draft = invalid ? null : { model_type: model, time_horizon: bv.time_horizon, steps: bv.steps, random_seed: bv.random_seed, stock_id: st.simStock || null,
+      parameters: { initial_price: bv.initial_price, drift: bv.drift, volatility: bv.volatility, extra_params: xv } };
+
+    var apiState = this.props.apiState || 'auto';
+    var active = view === 'sim' ? (st.run ? st.run : null) : (view === 'detail' ? savedRaw || null : null);
+    var load = !active ? 'idle' : (st.loadFor === active.id ? st.load : 'loading');
+    if (active && apiState === 'loading') load = 'loading';
+    if (active && (apiState === 'error413' || apiState === 'error404')) load = 'error';
+    var errCode = apiState === 'error404' ? 404 : apiState === 'error413' ? 413 : st.err;
+    var W = view === 'sim' ? 648 : 632, H = view === 'sim' ? 400 : 330;
+    var fallback = { id: 'none', model_type: 'gbm', time_horizon: 1, steps: 10, random_seed: 1, parameters: { initial_price: 100, drift: 0, volatility: 0, extra_params: { model: 'gbm' } } };
+    var ready = load === 'ready' && active;
+    var tk = this.ticksFor(ready ? active : fallback);
+    var ch = buildChart(tk, W, H, ready ? st.prog : 0, ready ? st.hover : null);
+    var ERR = {
+      413: { t: 'Trayectoria demasiado grande (413)', b: 'El servidor no puede devolver tantos ticks. Reduce los pasos e intenta de nuevo.' },
+      404: { t: 'Simulación no encontrada (404)', b: 'Puede que se haya eliminado. Actualiza el historial.' },
+      400: { t: 'Parámetros inválidos (400)', b: 'El servidor rechazó los parámetros de esta simulación.' }
+    };
+    var e = ERR[errCode] || { t: 'No se pudo cargar la trayectoria', b: 'Revisa tu conexión e inténtalo otra vez.' };
+    var ld = { ready: !!ready, loading: load === 'loading', error: load === 'error', idle: load === 'idle',
+      simId: active ? active.id : '{id}', errTitle: e.t, errBody: e.b,
+      idleMsg: 'Configura el modelo y presiona «Simular y guardar». El servidor calcula la trayectoria y aquí se reproduce en tiempo real.',
+      retry: function () { if (active) self.fetchTicks(active); } };
+    ch.onMove = function (e) { var r = e.currentTarget.getBoundingClientRect(), vx = (e.clientX - r.left) / r.width * ch.W, i = (vx - ch.L) / (ch.R - ch.L) * ch.n; self.setState({ hover: i >= 0 && i <= ch.n ? i : null }); };
+    ch.onLeave = function () { self.setState({ hover: null }); };
+
+    var pl = {
+      playing: st.playing, paused: !st.playing, toggleLabel: st.playing ? 'Pausar' : 'Reproducir',
+      toggle: function () { self.setState(function (s) { return s.prog >= 1 && !s.playing ? { prog: 0, playing: true } : { playing: !s.playing }; }); },
+      reset: function () { self.setState({ prog: 0, playing: false }); },
+      pos: Math.round(st.prog * 1000), label: ch.label,
+      seek: function (e) { self.setState({ prog: Math.max(0, Math.min(1, Number(e.target.value) / 1000)), playing: false }); },
+      track: 'linear-gradient(to right, ' + accent + ' ' + (st.prog * 100).toFixed(1) + '%, #ECEBE6 ' + (st.prog * 100).toFixed(1) + '%)',
+      speeds: [0.5, 1, 2, 4].map(function (v) { var on = v === st.speed; return { label: plain(v) + '×', on: on, bg: on ? '#FFFFFF' : 'transparent', fg: on ? '#16181D' : '#5A5D66', shadow: on ? '0 1px 2px rgba(0,0,0,.08)' : 'none', pick: function () { self.setState({ speed: v }); } }; })
+    };
+
+    function goSimFor(stock) { return function (s) { var f = defaultsFor(stock); f.random_seed = s.form.random_seed; return Object.assign({ view: 'sim', simStock: stock ? stock.id : '', form: f, run: null }, reset); }; }
+    var simStockObj = st.stocks.filter(function (s) { return s.id === st.simStock; })[0];
+
+    var D = st.dialog, dlg = { title: '', body: '', cta: '', showTicker: false, showName: false, disabled: false, btnBg: '#16181D', confirm: function () {} };
+    var close = { dialog: null };
+    if (D === 'add') dlg = { title: 'Agregar acción', body: 'Se crea con POST /stocks (ticker y nombre).', cta: 'Agregar', showTicker: true, showName: true, btnBg: '#16181D',
+      disabled: !st.dlgTicker.trim() || !st.dlgName.trim(),
+      confirm: function () { self.setState(function (s) { var nid = 's-' + Date.now(); return Object.assign({ stocks: s.stocks.concat([{ id: nid, ticker: s.dlgTicker.trim().toUpperCase(), name: s.dlgName.trim().toUpperCase(), model_type: null }]) }, close); }); } };
+    if (D === 'edit') dlg = { title: 'Editar acción', body: 'Solo el nombre se puede cambiar (PATCH /stocks/{id}).', cta: 'Guardar', showTicker: false, showName: true, btnBg: '#16181D',
+      disabled: !st.dlgName.trim(),
+      confirm: function () { self.setState(function (s) { return Object.assign({ stocks: s.stocks.map(function (x) { return x.id === cur.id ? Object.assign({}, x, { name: s.dlgName.trim().toUpperCase() }) : x; }) }, close); }); } };
+    if (D === 'delStock') dlg = { title: 'Eliminar ' + cur.ticker, body: 'Se eliminará la acción de tu perfil. Esta acción no se puede deshacer.', cta: 'Eliminar', showTicker: false, showName: false, disabled: false, btnBg: '#B42318',
+      confirm: function () { self.setState(function (s) { return Object.assign({ stocks: s.stocks.filter(function (x) { return x.id !== cur.id; }), sims: s.sims.filter(function (x) { return x.stock_id !== cur.id; }), view: 'stock' }, close); }); } };
+    if (D === 'delSim') dlg = { title: 'Eliminar simulación', body: 'Se eliminará esta simulación guardada (DELETE /simulations/{id}).', cta: 'Eliminar', showTicker: false, showName: false, disabled: false, btnBg: '#B42318',
+      confirm: function () { self.setState(function (s) { var rest = s.sims.filter(function (x) { return x.id !== s.selSim; }); var nxt = rest.filter(function (x) { return x.stock_id === cur.id; })[0]; if (nxt) setTimeout(function () { self.fetchTicks(nxt); }, 0); return Object.assign({ sims: rest, selSim: nxt ? nxt.id : null }, close); }); } };
+
+    var isAuth = view === 'login' || view === 'register', isReg = view === 'register';
+    var onStockSide = view === 'stock' || view === 'detail';
+    return {
+      accent: accent, faint: accent + '66',
+      isAuth: isAuth, isApp: !isAuth, isRegister: isReg,
+      authTitle: isReg ? 'Crear cuenta' : 'Iniciar sesión', authSub: isReg ? 'Regístrate para guardar tus acciones y simulaciones.' : 'Ingresa para ver tus acciones y simulaciones.',
+      authCta: isReg ? 'Crear cuenta' : 'Iniciar sesión', authSwitchTxt: isReg ? '¿Ya tienes cuenta?' : '¿No tienes cuenta?', authSwitchCta: isReg ? 'Inicia sesión' : 'Regístrate',
+      authSwitch: function () { self.setState({ view: isReg ? 'login' : 'register' }); },
+      login: function () { self.setState({ view: 'stock' }); }, logout: function () { self.setState({ view: 'login' }); },
+      sideOpen: st.sideOpen, sideW: st.sideOpen ? '280px' : '88px', toggleSide: function () { self.setState({ sideOpen: !st.sideOpen }); },
+      isStock: view === 'stock', isDetail: view === 'detail', isSim: view === 'sim',
+      goStock: function () { self.setState({ view: 'stock' }); },
+      goSimNav: function () { self.setState(Object.assign({ view: 'sim' }, reset)); },
+      newSimForCur: function () { self.setState(goSimFor(cur)); },
+      pickStock: function (e) { var id = e.target.value, s = st.stocks.filter(function (x) { return x.id === id; })[0]; self.setState(goSimFor(s || null)); },
+      stockOpts: st.stocks, simStock: st.simStock || '', simTicker: simStockObj ? simStockObj.ticker : 'Sin acción',
+      navStockBg: onStockSide ? '#16181D' : 'transparent', navStockFg: onStockSide ? '#FFFFFF' : '#16181D',
+      navSimBg: view === 'sim' ? '#16181D' : 'transparent', navSimFg: view === 'sim' ? '#FFFFFF' : '#16181D',
+      query: st.query, onSearch: function (e) { self.setState({ query: e.target.value }); },
+      stocks: stocks, noResults: stocks.length === 0, cur: cur,
+      hist: hist, histCount: hist.length, histEmpty: hist.length === 0, histMore: hist.length >= 3,
+      hasSaved: !!savedRaw, noSaved: !savedRaw, saved: saved,
+      ch: ch, pl: pl,
+      form: fm, setModel: function (e) { var v = e.target.value; self.setState(function (s) { return Object.assign({ form: Object.assign({}, s.form, { model: v }), run: null }, reset); }); },
+      formula: MODELS[model].formula, baseFields: base, extraFields: extras, hasExtra: extras.length > 0,
+      invalid: invalid, invalidMsg: 'Revisa los campos marcados: S₀, T y pasos deben ser positivos; la semilla, un entero ≥ 0; ρ entre −1 y 1.',
+      newSeed: function () { self.setState(function (s) { return Object.assign({ form: Object.assign({}, s.form, { random_seed: String(Math.floor(Math.random() * 1e6)) }), run: null }, reset); }); },
+      saveDisabled: invalid || ld.loading,
+      save: function () {
+        if (!draft) return;
+        var rec = Object.assign({ id: 'sim-' + Date.now(), created_at: today() }, JSON.parse(JSON.stringify(draft)));
+        self.setState(function (s) { return Object.assign({ sims: [rec].concat(s.sims), run: rec }, reset); });
+        self.fetchTicks(rec);
+      },
+      runMeta: st.run ? 'seed ' + st.run.random_seed + ' · ' + st.run.steps + ' pasos · T ' + plain(st.run.time_horizon) + ' a' : 'seed ' + fm.random_seed,
+      runSaved: !!st.run, runHasStock: !!(st.run && st.run.stock_id),
+      runSavedTxt: st.run ? (st.run.stock_id ? 'Simulación guardada en ' + (simStockObj ? simStockObj.ticker : 'la acción') + '.' : 'Simulación guardada sin acción asociada.') : '',
+      openRunInHistory: function () { var r = st.run; if (!r) return; self.setState(Object.assign({ view: 'detail', sel: r.stock_id, selSim: r.id }, reset)); },
+      ld: ld,
+      hasDialog: !!D, dlg: dlg, dlgTicker: st.dlgTicker, dlgName: st.dlgName,
+      setDlgTicker: function (e) { self.setState({ dlgTicker: e.target.value }); }, setDlgName: function (e) { self.setState({ dlgName: e.target.value }); },
+      closeDialog: function () { self.setState({ dialog: null }); },
+      openAdd: function () { self.setState({ dialog: 'add', dlgTicker: '', dlgName: '' }); },
+      openEdit: function () { self.setState({ dialog: 'edit', dlgName: cur.name }); },
+      openDelStock: function () { self.setState({ dialog: 'delStock' }); },
+      openDelSim: function () { self.setState({ dialog: 'delSim' }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

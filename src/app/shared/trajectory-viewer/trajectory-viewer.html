@@ -1,0 +1,110 @@
+@switch (store.status()) {
+  @case ('loading') {
+    <div
+      role="status"
+      class="flex flex-col items-center justify-center gap-3 rounded-xl bg-canvas p-6 text-center"
+      [class]="boxHeight()"
+    >
+      <p-progressspinner strokeWidth="3" ariaLabel="Cargando" />
+      <span class="text-[15px] font-medium">Cargando trayectoria…</span>
+      <span class="font-mono text-xs text-muted">
+        GET /simulations/{{ store.simulationId() }}/ticks
+      </span>
+    </div>
+  }
+  @case ('error') {
+    <div
+      role="alert"
+      class="flex flex-col items-center justify-center gap-3 rounded-xl border border-danger-line bg-danger-soft p-6 text-center"
+      [class]="boxHeight()"
+    >
+      <i class="pi pi-exclamation-circle text-[28px] text-danger" aria-hidden="true"></i>
+      <span class="text-[15px] font-semibold text-danger-dark">{{ store.error().title }}</span>
+      <span class="max-w-[420px] text-sm text-muted">{{ store.error().body }}</span>
+      <p-button
+        label="Reintentar"
+        severity="secondary"
+        size="small"
+        (onClick)="store.retry()"
+      />
+    </div>
+  }
+  @case ('idle') {
+    <div
+      class="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-line-strong p-6 text-center"
+      [class]="boxHeight()"
+    >
+      <i class="pi pi-chart-line text-4xl text-faint" aria-hidden="true"></i>
+      <span class="text-[15px] font-semibold">Aún no hay trayectoria</span>
+      <span class="max-w-[440px] text-sm text-muted">{{ idleMessage }}</span>
+    </div>
+  }
+}
+
+<!-- The chart stays mounted across loads: new trajectories go through setData(). -->
+<div class="flex flex-col gap-[18px]" [class.hidden]="store.status() !== 'ready'">
+  @if (showStats()) {
+    <div class="grid grid-cols-4 gap-2.5">
+      @for (stat of stats(); track stat.label) {
+        <div class="flex flex-col gap-1 rounded-[10px] bg-canvas px-3.5 py-3">
+          <span class="text-xs text-muted">{{ stat.label }}</span>
+          <span class="font-mono text-lg font-medium">{{ stat.value }}</span>
+        </div>
+      }
+    </div>
+  }
+
+  <div class="flex flex-col gap-2">
+    <div class="relative cursor-crosshair" role="img" aria-label="Trayectoria simulada del precio">
+      <app-uplot-chart [options]="chartOptions()" [data]="chartData()" />
+      @if (tooltip(); as tip) {
+        <div
+          aria-hidden="true"
+          class="pointer-events-none absolute whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-800 shadow-[0_4px_12px_rgba(22,24,29,0.12)]"
+          [class.-translate-x-full]="tip.flip"
+          [style.left.px]="tip.flip ? tip.left - 12 : tip.left + 12"
+          [style.top.px]="tip.top"
+        >
+          {{ tip.text }}
+        </div>
+      }
+    </div>
+
+    @if (legend(); as lg) {
+      <div
+        class="flex flex-wrap items-center gap-x-5 gap-y-1 pl-2 font-mono text-xs text-muted"
+        aria-live="off"
+      >
+        <span class="flex gap-1.5">
+          <span class="font-medium text-slate-700">Tick:</span>
+          <span class="text-ink">{{ lg.tick }}</span>
+        </span>
+        <span class="flex gap-1.5">
+          <span class="font-medium text-slate-700">t:</span>
+          <span class="text-ink">{{ lg.time }} a</span>
+        </span>
+        <span class="flex items-center gap-2">
+          <span class="h-[3px] w-4 rounded-sm bg-brand" aria-hidden="true"></span>
+          <span class="font-medium text-slate-700">Precio:</span>
+          <span class="text-ink">{{ lg.price }}</span>
+        </span>
+        <span class="flex items-center gap-2">
+          <span class="h-0 w-4 border-t-2 border-dashed border-brand/40" aria-hidden="true"></span>
+          <span class="font-medium text-slate-700">S₀:</span>
+          <span class="text-ink">{{ lg.s0 }}</span>
+        </span>
+      </div>
+    }
+  </div>
+
+  <app-playback-controls
+    [playing]="playback.playing()"
+    [progress]="playback.progress()"
+    [speed]="playback.speed()"
+    [label]="playbackLabel()"
+    (reset)="playback.reset()"
+    (toggle)="playback.toggle()"
+    (seek)="playback.seek($event)"
+    (speedChange)="playback.speed.set($event)"
+  />
+</div>

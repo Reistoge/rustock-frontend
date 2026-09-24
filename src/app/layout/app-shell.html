@@ -1,0 +1,61 @@
+<aside
+  class="flex h-full shrink-0 flex-col gap-10 border-r border-line bg-white px-4 py-6 transition-[width] duration-200"
+  [class]="sideOpen() ? 'w-[280px]' : 'w-[88px]'"
+>
+  <div class="flex items-center gap-3">
+    <p-button
+      icon="pi pi-bars"
+      severity="secondary"
+      ariaLabel="Abrir o cerrar menú"
+      (onClick)="toggleSide()"
+    />
+    @if (sideOpen()) {
+      <span class="text-lg font-bold tracking-tight">Rustock</span>
+    }
+  </div>
+
+  <nav aria-label="Principal" class="flex flex-col gap-1.5">
+    @for (item of navItems; track item.path) {
+      <a
+        [routerLink]="item.path"
+        routerLinkActive="bg-ink! text-white! hover:bg-ink!"
+        ariaCurrentWhenActive="page"
+        [attr.aria-label]="sideOpen() ? null : item.label"
+        class="flex h-[52px] items-center gap-3.5 rounded-[10px] px-3.5 text-lg font-medium text-ink no-underline hover:bg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+      >
+        <i [class]="item.icon" class="text-[20px]" aria-hidden="true"></i>
+        @if (sideOpen()) {
+          <span>{{ item.label }}</span>
+        }
+      </a>
+    }
+  </nav>
+
+  <div class="mt-auto flex items-center gap-3 px-1.5 py-2" [class.flex-col]="!sideOpen()">
+    <div
+      aria-hidden="true"
+      class="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-semibold text-brand-dark"
+    >
+      {{ initials() }}
+    </div>
+    @if (sideOpen()) {
+      <div class="flex min-w-0 flex-1 flex-col">
+        <span class="truncate text-sm font-semibold">{{ displayName() }}</span>
+        <span class="truncate text-xs text-muted">{{ email() }}</span>
+      </div>
+    }
+    <p-button
+      icon="pi pi-sign-out"
+      variant="text"
+      size="small"
+      ariaLabel="Cerrar sesión"
+      (onClick)="logout()"
+    />
+  </div>
+</aside>
+
+<main class="flex min-w-0 flex-1 flex-col overflow-auto px-12 py-10">
+  <router-outlet />
+</main>
+
+<p-confirmdialog />

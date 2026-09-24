@@ -1,11 +1,58 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import 'tailwindcss';
+@import 'primeicons/primeicons.css';
 @import 'uplot/dist/uPlot.min.css';
-@plugin "tailwindcss-primeui";
 
-/* uPlot theme override so the chart canvas matches the app's palette. */
-.uplot {
-  @apply text-slate-800 bg-white border border-slate-200;
+/* Design tokens (docs/design/HANDOFF.md §1). Tailwind v4 reads them from
+   `@theme` instead of `tailwind.config` → `theme.extend`. */
+@theme {
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --color-ink: #16181d;
+  --color-canvas: #f4f3ef;
+  --color-line: #dedcd5;
+  --color-line-strong: #c9c6bd;
+  --color-muted: #5a5d66;
+  --color-body: #3e4149;
+  --color-subtle: #ecebe6;
+  --color-faint: #9a9ca3;
+  --color-brand: #2f4fd8;
+  --color-brand-dark: #1f3aa8;
+  --color-brand-soft: #eef1fc;
+  --color-danger: #b42318;
+  --color-danger-dark: #7a1a12;
+  --color-danger-soft: #fdf3f2;
+  --color-danger-hover: #fdecea;
+  --color-danger-line: #f4c7c3;
+  --color-success: #14532d;
+  --color-success-soft: #eef7f1;
+  --color-success-line: #bfe3cb;
 }
 
+@layer base {
+  body {
+    @apply bg-canvas font-sans text-ink antialiased;
+  }
+
+  a {
+    @apply text-brand hover:text-brand-dark;
+  }
+
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    @apply cursor-pointer;
+  }
+}
+
+/* uPlot theme (RULES.md §5): axes, cursor and hover point in the app palette. */
+.uplot {
+  @apply w-full font-mono text-xs text-muted;
+}
+
+.uplot .u-cursor-x {
+  @apply border-r border-dashed border-faint;
+}
+
+.uplot .u-cursor-pt {
+  @apply border-2 border-brand bg-white;
+}
